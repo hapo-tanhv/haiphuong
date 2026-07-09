@@ -1,0 +1,165 @@
+<section id="view-overview" class="view-section">
+  <div class="overview-layout">
+    <!-- Row 1: KPI Panels & Selected Machine -->
+    <div class="overview-row-top-custom">
+      <!-- Panel 1: Selected Machine Image -->
+      <div class="kpi-panel-left">
+        <div class="active-machine-panel-custom">
+          <div class="panel-header-custom">
+            <h3 class="panel-title-custom" data-i18n="active_machine_header">MÁY DẬP</h3>
+          </div>
+          <div class="machine-image-wrapper-custom">
+            <img src="@Url.Content("~/Image/maydap.jpeg")" alt="Máy dập hoạt động" class="machine-hero-image-custom" id="selected-machine-image" style="width: 60%; object-fit: cover;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: System Performance -->
+      <div class="kpi-panel-middle">
+        <div class="kpi-card-custom">
+          <h3 class="kpi-card-title-custom" data-i18n="kpi_efficiency_title">HIỆU SUẤT TOÀN HỆ THỐNG</h3>
+          <div class="gauge-container-custom">
+            <svg class="gauge-svg-custom" viewBox="0 0 200 150">
+              <defs>
+                <linearGradient id="gauge-grad-custom" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#0055ff" />
+                  <stop offset="60%" stop-color="#00a8e8" />
+                  <stop offset="100%" stop-color="#00d2ff" />
+                </linearGradient>
+                <filter id="gauge-glow-custom" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              <path class="gauge-track-custom" d="M 30,120 A 70,70 0 0,1 170,120" stroke="#16223f" stroke-width="8" stroke-linecap="butt" fill="none" />
+              <path class="gauge-fill-custom" d="M 30,120 A 70,70 0 0,1 170,120" stroke="url(#gauge-grad-custom)" stroke-width="8" stroke-linecap="butt" fill="none"
+                    stroke-dasharray="220" stroke-dashoffset="33" filter="url(#gauge-glow-custom)" />
+            </svg>
+            <div class="gauge-center-text-custom">
+              <span class="gauge-value-custom">85<span class="percent-sign">%</span></span>
+              <span class="gauge-label-custom" data-i18n="overview_average_efficiency">Hiệu suất trung bình</span>
+            </div>
+          </div>
+          
+          <div class="kpi-sub-stats-grid">
+            <div class="kpi-sub-stat-item">
+              <span class="sub-stat-lbl" data-i18n="kpi_strokes_title">SẢN LƯỢNG THỰC TẾ</span>
+              <span class="sub-stat-val">12.568 <span class="sub-stat-unit" data-i18n="overview_strokes_unit">lần</span></span>
+            </div>
+            <div class="kpi-sub-stat-item">
+              <span class="sub-stat-lbl" data-i18n="kpi_target_day_title">TỔNG KẾ HOẠCH NGÀY</span>
+              <span class="sub-stat-val">15.000 <span class="sub-stat-unit" data-i18n="overview_strokes_unit">lần</span></span>
+            </div>
+            <div class="kpi-sub-stat-item">
+              <span class="sub-stat-lbl" data-i18n="kpi_total_order_title">TỔNG LỆNH SX</span>
+              <span class="sub-stat-val">120.000 <span class="sub-stat-unit" data-i18n="overview_strokes_unit">lần</span></span>
+            </div>
+          </div>
+          
+          <div class="kpi-status-row">
+            <div class="status-box box-running">
+              <div class="status-box-header">
+                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span class="status-box-lbl" data-i18n="kpi_running_title">MÁY ĐANG HOẠT ĐỘNG</span>
+              </div>
+              <span class="status-box-val">7 / 10 <span class="unit" data-i18n="overview_machines_unit">máy</span></span>
+            </div>
+            <div class="status-box box-stopped">
+              <div class="status-box-header">
+                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="9" y1="5" x2="9" y2="19"></line>
+                  <line x1="15" y1="5" x2="15" y2="19"></line>
+                </svg>
+                <span class="status-box-lbl" data-i18n="kpi_stopped_title">MÁY DỪNG</span>
+              </div>
+              <span class="status-box-val">3 / 10 <span class="unit" data-i18n="overview_machines_unit">máy</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Panel 3: Time Series Chart & KPI Boxes -->
+      <div class="kpi-panel-right">
+        <div class="chart-panel-custom">
+          <div class="chart-header-custom">
+            <h3 class="chart-title-custom" data-i18n="chart_strokes_time_title">SẢN LƯỢNG THỰC TẾ THEO THỜI GIAN</h3>
+          </div>
+          
+          <div class="machine-chart-container-custom">
+            <svg class="trend-chart-svg" viewBox="0 0 280 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="chart-line-grad-custom" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#0055ff" />
+                  <stop offset="100%" stop-color="#00d2ff" />
+                </linearGradient>
+                <linearGradient id="chart-fill-grad-custom" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="rgba(0, 210, 255, 0.25)" />
+                  <stop offset="100%" stop-color="rgba(0, 210, 255, 0.0)" />
+                </linearGradient>
+                <filter id="chart-glow-custom-glow" x="-10%" y="-10%" width="120%" height="120%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              <line x1="40" y1="20" x2="260" y2="20" stroke="#16223f" stroke-width="1" stroke-dasharray="3,3" />
+              <line x1="40" y1="55" x2="260" y2="55" stroke="#16223f" stroke-width="1" stroke-dasharray="3,3" />
+              <line x1="40" y1="90" x2="260" y2="90" stroke="#16223f" stroke-width="1" />
+              <text x="32" y="24" fill="#4e5b6e" font-size="8" text-anchor="end" font-family="'Inter', sans-serif">2.0k</text>
+              <text x="32" y="59" fill="#4e5b6e" font-size="8" text-anchor="end" font-family="'Inter', sans-serif">1.0k</text>
+              <text x="32" y="94" fill="#4e5b6e" font-size="8" text-anchor="end" font-family="'Inter', sans-serif">500</text>
+              <text x="32" y="112" fill="#4e5b6e" font-size="8" text-anchor="end" font-family="'Inter', sans-serif">0</text>
+              <path id="chart-fill-path" d="M 40,85 C 75,85 75,65 110,65 C 145,65 145,35 180,35 C 215,35 215,45 250,45 L 250,90 L 40,90 Z" fill="url(#chart-fill-grad-custom)" />
+              <path id="chart-trend-path" d="M 40,85 C 75,85 75,65 110,65 C 145,65 145,35 180,35 C 215,35 215,45 250,45" stroke="url(#chart-line-grad-custom)" stroke-width="3" stroke-linecap="round" filter="url(#chart-glow-custom-glow)" />
+              <circle cx="40" cy="85" r="4" fill="#00d2ff" stroke="#0c1527" stroke-width="1.5" />
+              <circle cx="110" cy="65" r="4" fill="#00d2ff" stroke="#0c1527" stroke-width="1.5" />
+              <circle cx="180" cy="35" r="4" fill="#00d2ff" stroke="#0c1527" stroke-width="1.5" />
+              <circle cx="250" cy="45" r="4" fill="#00d2ff" stroke="#0c1527" stroke-width="1.5" />
+              <text x="40" y="112" fill="#4e5b6e" font-size="8" text-anchor="middle" font-family="'Inter', sans-serif">07:00</text>
+              <text x="110" y="112" fill="#4e5b6e" font-size="8" text-anchor="middle" font-family="'Inter', sans-serif">10:00</text>
+              <text x="180" y="112" fill="#4e5b6e" font-size="8" text-anchor="middle" font-family="'Inter', sans-serif">13:00</text>
+              <text x="250" y="112" fill="#4e5b6e" font-size="8" text-anchor="middle" font-family="'Inter', sans-serif">16:00</text>
+            </svg>
+          </div>
+          
+          <div class="perf-boxes-row">
+            <div class="perf-box">
+              <div class="perf-box-details">
+                <span class="perf-box-lbl" data-i18n="perf_plan_efficiency">HIỆU SUẤT KẾ HOẠCH (TB)</span>
+                <span class="perf-box-val" id="overview-plan-efficiency-avg">83.7%</span>
+                <span class="perf-box-sub">= Thực tế / Kế hoạch</span>
+              </div>
+            </div>
+            <div class="perf-box">
+              <div class="perf-box-details">
+                <span class="perf-box-lbl" data-i18n="perf_time_efficiency">HIỆU SUẤT THỜI GIAN (TB)</span>
+                <span class="perf-box-val" id="overview-time-efficiency-avg">64.6%</span>
+                <span class="perf-box-sub">= Thời gian chạy / Thời gian ca</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Row 2: Machine Grid -->
+    <div class="machine-grid-container" id="machine-grid-container">
+      <div class="machine-grid" id="overview-machine-grid">
+        <!-- Will be dynamically populated via JS -->
+      </div>
+
+      <!-- Dòng thông tin hướng dẫn -->
+      <div class="grid-helper-text">
+        <svg class="helper-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span data-i18n="overview_grid_helper">Nhấn vào từng máy để xem chi tiết và lịch sử hoạt động</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. VIEW MÁY DẬP -->

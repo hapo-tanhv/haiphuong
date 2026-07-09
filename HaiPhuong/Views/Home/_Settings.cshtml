@@ -1,0 +1,117 @@
+        <section id="view-settings" class="view-section hidden">
+          <div class="account-settings-container" style="padding: 24px; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-color); margin: 24px;">
+            <!-- Header Area -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: 0.5px;" data-i18n="settings_account_title">HỆ THỐNG CÀI ĐẶT TÀI KHOẢN</h2>
+              </div>
+              <button class="settings-btn btn-primary" id="btn-create-account" style="background: var(--accent-blue); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 210, 255, 0.2); transition: all 0.2s;" data-i18n="settings_btn_create_account">
+                <span>+</span> <span data-i18n="settings_btn_create_account_text">Tạo tài khoản mới</span>
+              </button>
+            </div>
+
+            <!-- Controls Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                <span data-i18n="settings_show_lbl">Hiển thị</span>
+                <select id="settings-page-size" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 6px 12px; border-radius: 6px; outline: none; cursor: pointer;">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+                <span data-i18n="settings_accounts_lbl">tài khoản</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary);">
+                <span data-i18n="settings_search_lbl">Tìm kiếm:</span>
+                <input type="text" id="settings-search-input" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 6px 12px; border-radius: 6px; outline: none; width: 200px;">
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="r-table-container" style="margin-bottom: 16px;">
+              <table class="report-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr>
+                    <th style="width: 80px; text-align: center;" data-i18n="settings_col_stt">STT</th>
+                    <th style="text-align: left;" data-i18n="settings_col_username">TÊN ĐĂNG NHẬP (USERNAME)</th>
+                    <th style="width: 200px; text-align: center;" data-i18n="settings_col_role">VAI TRÒ (ROLE)</th>
+                    <th style="width: 320px; text-align: center;" data-i18n="settings_col_action">HÀNH ĐỘNG</th>
+                  </tr>
+                </thead>
+                <tbody id="settings-accounts-body">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-secondary);">
+              <div id="settings-table-info">
+                <!-- "Đang xem X đến Y trong Z tài khoản" -->
+              </div>
+              <div class="pagination" id="settings-pagination" style="display: flex; gap: 4px;">
+                <!-- Pagination controls -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Floating UI Components: Toast Notification and Modals -->
+        <div class="toast-container" id="toast-container"></div>
+
+        <!-- Add/Create User Modal -->
+        <div class="alarm-modal-overlay hidden" id="settings-create-modal">
+          <div class="alarm-modal-card">
+            <div class="alarm-modal-header">
+              <h3 class="alarm-modal-title" data-i18n="settings_create_title">Tạo Tài Khoản Mới</h3>
+              <button class="alarm-modal-close" id="settings-create-close">&times;</button>
+            </div>
+            <div class="alarm-modal-body">
+              <div class="modal-detail-row">
+                <span class="detail-label" data-i18n="settings_input_username">Tên đăng nhập (Username)</span>
+                <input type="text" id="settings-create-username" placeholder="Nhập tên đăng nhập..." style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; color: white; outline: none; margin-top: 4px;">
+              </div>
+              <div class="modal-detail-row" style="margin-top: 12px;">
+                <span class="detail-label" data-i18n="settings_input_role">Vai trò (Role)</span>
+                <div class="custom-select-wrapper" style="margin-top: 4px; width: 100%;">
+                  <select id="settings-create-role" style="width: 100%;">
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="OPERATOR" selected>OPERATOR</option>
+                  </select>
+                </div>
+              </div>
+              <div class="modal-detail-row" style="margin-top: 12px;">
+                <span class="detail-label" data-i18n="settings_input_password">Mật khẩu</span>
+                <input type="password" id="settings-create-password" placeholder="Nhập mật khẩu..." style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; color: white; outline: none; margin-top: 4px;">
+              </div>
+            </div>
+            <div class="alarm-modal-footer">
+              <button class="alarm-modal-btn btn-ack" id="settings-create-cancel" data-i18n="btn_cancel" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">Hủy bỏ</button>
+              <button class="alarm-modal-btn btn-resolve" id="settings-create-submit" data-i18n="btn_confirm">Xác nhận</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div class="alarm-modal-overlay hidden" id="settings-pwd-modal">
+          <div class="alarm-modal-card">
+            <div class="alarm-modal-header">
+              <h3 class="alarm-modal-title" data-i18n="settings_pwd_title">Đổi Mật Khẩu</h3>
+              <button class="alarm-modal-close" id="settings-pwd-close">&times;</button>
+            </div>
+            <div class="alarm-modal-body">
+              <div class="modal-detail-row">
+                <span class="detail-label" data-i18n="settings_pwd_user">Tài khoản</span>
+                <input type="text" id="settings-pwd-username" disabled style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-secondary); outline: none; margin-top: 4px; opacity: 0.7;">
+              </div>
+              <div class="modal-detail-row" style="margin-top: 12px;">
+                <span class="detail-label" data-i18n="settings_pwd_new">Mật khẩu mới</span>
+                <input type="password" id="settings-pwd-newpwd" placeholder="Nhập mật khẩu mới..." style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; color: white; outline: none; margin-top: 4px;">
+              </div>
+            </div>
+            <div class="alarm-modal-footer">
+              <button class="alarm-modal-btn btn-ack" id="settings-pwd-cancel" data-i18n="btn_cancel" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">Hủy bỏ</button>
+              <button class="alarm-modal-btn btn-resolve" id="settings-pwd-submit" data-i18n="btn_confirm">Xác nhận</button>
+            </div>
+          </div>
+        </div>

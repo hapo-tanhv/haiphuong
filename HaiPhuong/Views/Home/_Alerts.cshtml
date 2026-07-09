@@ -1,0 +1,163 @@
+        <section id="view-alert" class="view-section hidden">
+          <div class="alarm-layout">
+            <!-- Top KPI Cards Row -->
+            <div class="alarm-kpi-row">
+              <!-- KPI Card 1: Critical errors -->
+              <div class="alarm-kpi-card border-red">
+                <div class="alarm-kpi-content">
+                  <span class="alarm-kpi-label" data-i18n="alarm_kpi_critical">LỖI NGHIÊM TRỌNG</span>
+                  <span class="alarm-kpi-value color-red" id="alarm-kpi-critical">03</span>
+                  <span class="alarm-kpi-subtext" data-i18n="alarm_kpi_critical_sub">Yêu cầu can thiệp ngay lập tức</span>
+                </div>
+                <div class="alarm-kpi-badge">
+                  <svg class="alarm-icon-svg text-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- KPI Card 2: System warnings -->
+              <div class="alarm-kpi-card border-orange">
+                <div class="alarm-kpi-content">
+                  <span class="alarm-kpi-label" data-i18n="alarm_kpi_warning">CẢNH BÁO HỆ THỐNG</span>
+                  <span class="alarm-kpi-value color-orange" id="alarm-kpi-warning">12</span>
+                  <span class="alarm-kpi-subtext" data-i18n="alarm_kpi_warning_sub">Kiểm tra bảo trì định kỳ</span>
+                </div>
+                <div class="alarm-kpi-badge">
+                  <svg class="alarm-icon-svg text-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- KPI Card 3: Uptime and stats -->
+              <div class="alarm-kpi-card">
+                <div class="alarm-kpi-content" style="width: 60%;">
+                  <span class="alarm-kpi-label" data-i18n="alarm_kpi_uptime">THỜI GIAN HOẠT ĐỘNG (UPTIME)</span>
+                  <span class="alarm-kpi-value color-green" id="alarm-kpi-uptime">98.4%</span>
+                  <div class="alarm-kpi-sub-stats">
+                    <div class="sub-stat">
+                      <span class="sub-lbl" data-i18n="alarm_kpi_uptime_sub">DOWNTIME (HÔM NAY)</span>
+                      <span class="sub-val text-orange" id="alarm-kpi-downtime">22 <span data-i18n="alarm_unit_minute">Phút</span></span>
+                    </div>
+                    <div class="sub-stat">
+                      <span class="sub-lbl" data-i18n="alarm_kpi_strokes_lbl">SỐ NHỊP (STROKE COUNT)</span>
+                      <span class="sub-val" id="alarm-kpi-strokes">124,502</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="alarm-kpi-gauge-container">
+                  <svg class="alarm-gauge-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="38" stroke="#16223f" stroke-width="7" fill="none" />
+                    <circle cx="50" cy="50" r="38" stroke="#00e676" stroke-width="7" fill="none"
+                            stroke-dasharray="238.76" stroke-dashoffset="3.8" stroke-linecap="round"
+                            transform="rotate(-90 50 50)" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="alarm-filter-bar">
+              <div class="alarm-filter-tabs" id="alarm-severity-tabs">
+                <button class="alarm-tab-btn active" data-severity="all"><span data-i18n="alarm_filter_severity_all">Tất cả</span> <span class="badge-count" id="alarm-count-all">3</span></button>
+                <button class="alarm-tab-btn" data-severity="critical" data-i18n="alarm_filter_severity_critical">Nghiêm trọng</button>
+                <button class="alarm-tab-btn" data-severity="warning" data-i18n="alarm_filter_severity_warning">Cảnh báo</button>
+                <button class="alarm-tab-btn" data-severity="info" data-i18n="alarm_filter_severity_info">Thông tin</button>
+              </div>
+
+              <div class="alarm-search-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="alarm-search-input" placeholder="Tìm kiếm theo mã lỗi hoặc máy..." data-i18n="alarm_search_placeholder">
+              </div>
+
+              <button class="alarm-filter-btn">
+                <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="2" y1="14" x2="6" y2="14"></line>
+                  <line x1="10" y1="8" x2="14" y2="8"></line>
+                  <line x1="18" y1="16" x2="22" y2="16"></line>
+                </svg>
+                <span data-i18n="history_btn_filter">Lọc</span>
+              </button>
+            </div>
+
+            <!-- Table Panel -->
+            <div class="alarm-table-panel">
+              <div class="alarm-table-container">
+                <table class="alarm-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 140px;" data-i18n="alarm_tbl_col_time">THỜI GIAN</th>
+                      <th style="width: 140px;" data-i18n="alarm_tbl_col_severity">MỨC ĐỘ</th>
+                      <th style="width: 220px;" data-i18n="alarm_tbl_col_code">MÃ LỖI / THIẾT BỊ</th>
+                      <th data-i18n="alarm_tbl_col_desc">MÔ TẢ CHI TIẾT</th>
+                      <th style="width: 160px;" data-i18n="alarm_tbl_col_status">TRẠNG THÁI</th>
+                    </tr>
+                  </thead>
+                  <tbody id="alarm-table-body">
+                    <!-- Dynamically populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Footer Pagination -->
+              <div class="alarm-table-footer">
+                <span class="footer-info" id="alarm-table-info">Hiển thị 1 - 10 trên tổng số 24 cảnh báo</span>
+                <div class="pagination" id="alarm-pagination">
+                  <!-- Generated via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Alarm Interactive Acknowledge Modal -->
+        <div class="alarm-modal-overlay hidden" id="alarm-action-modal">
+          <div class="alarm-modal-card">
+            <div class="alarm-modal-header">
+              <h3 class="alarm-modal-title" data-i18n="alarm_modal_title">Xử Lý Cảnh Báo Lỗi</h3>
+              <button class="alarm-modal-close" id="alarm-modal-close-btn">&times;</button>
+            </div>
+            <div class="alarm-modal-body">
+              <div class="modal-detail-row">
+                <span class="detail-label" data-i18n="alarm_modal_lbl_time">Thời gian:</span>
+                <span class="detail-val" id="modal-detail-time">14:22:15 12/10/2024</span>
+              </div>
+              <div class="modal-detail-row">
+                <span class="detail-label" data-i18n="alarm_modal_lbl_severity">Mức độ:</span>
+                <span class="detail-val" id="modal-detail-severity">Nghiêm trọng</span>
+              </div>
+              <div class="modal-detail-row">
+                <span class="detail-label" data-i18n="alarm_modal_lbl_code">Thiết bị / Mã lỗi:</span>
+                <span class="detail-val font-bold" id="modal-detail-code">ERR-DOWNTIME-902 (MÁY ÉP #08)</span>
+              </div>
+              <div class="modal-detail-row">
+                <span class="detail-label" data-i18n="alarm_modal_lbl_desc">Mô tả sự cố:</span>
+                <span class="detail-val desc" id="modal-detail-desc">Áp suất thủy lực vượt ngưỡng cho phép (185 bar). Hệ thống tự động ngắt khẩn cấp.</span>
+              </div>
+              <div class="modal-detail-row">
+                <span class="detail-label">Trạng thái hiện tại:</span>
+                <span class="detail-val" id="modal-detail-status">Đang xử lý</span>
+              </div>
+            </div>
+            <div class="alarm-modal-footer">
+              <button class="alarm-modal-btn btn-ack" id="alarm-btn-ack">Xác nhận xử lý (Acknowledge)</button>
+              <button class="alarm-modal-btn btn-resolve" id="alarm-btn-resolve">Đã khắc phục xong (Resolve)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. VIEW CÀI ĐẶT -->

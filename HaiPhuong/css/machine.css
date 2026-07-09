@@ -1,0 +1,708 @@
+.machine-list-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
+}
+
+.control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.search-box-wrapper {
+  position: relative;
+  flex-grow: 1;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+#machine-search-input {
+  width: 100%;
+  padding: 12px 16px 12px 48px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+#machine-search-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-btn:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(0, 210, 255, 0.3);
+}
+
+.filter-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+}
+
+.view-switcher {
+  display: flex;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.switch-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.switch-btn:hover {
+  color: var(--text-primary);
+}
+
+.switch-btn.active {
+  background-color: rgba(0, 210, 255, 0.1);
+  color: var(--accent-blue);
+  box-shadow: 0 2px 8px rgba(0, 210, 255, 0.1);
+}
+
+.switch-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Machine List Grid */
+.machine-list-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  width: 100%;
+}
+
+.machine-list-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.machine-list-card:hover {
+  border-color: rgba(0, 210, 255, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.machine-list-card.selected {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 25px rgba(0, 210, 255, 0.25);
+  background-color: rgba(0, 85, 255, 0.03);
+}
+
+.ml-card-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ml-card-thumb-wrapper {
+  width: 65px;
+  height: 65px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background-color: var(--bg-sidebar);
+}
+
+.ml-card-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ml-card-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.ml-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ml-card-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+.ml-card-link-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+
+.machine-list-card:hover .ml-card-link-icon {
+  opacity: 1;
+  color: var(--accent-blue);
+}
+
+.ml-card-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ml-card-status .status-indicator-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.ml-card-status .status-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.ml-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ml-body-row {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.ml-body-row + .ml-body-row {
+  margin-top: 0; /* Clear inline overrides */
+}
+
+.ml-body-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ml-col-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.ml-col-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ml-col-value.value-highlight {
+  color: var(--accent-blue);
+  text-shadow: 0 0 10px rgba(0, 210, 255, 0.15);
+}
+
+.ml-col-value .unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: 2px;
+}
+
+.ml-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.ml-load-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ml-load-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.ml-load-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.ml-load-bar-bg {
+  width: 100%;
+  height: 6px;
+  background-color: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ml-load-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0055ff, #00d2ff);
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  background-color: rgba(12, 21, 39, 0.4);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 1400px) {
+  .machine-list-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .machine-list-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* History View Styling (Task 5.7) */
+
+/* Machine Detail Alarms Panel */
+.detail-alarms-panel-custom {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.machine-alarms-list-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Custom Scrollbar for Alarms List */
+.machine-alarms-list-custom::-webkit-scrollbar {
+  width: 6px;
+}
+.machine-alarms-list-custom::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+}
+.machine-alarms-list-custom::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+.machine-alarms-list-custom::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.mini-alarm-row-custom {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.mini-alarm-row-custom:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Border left colors based on severity */
+.mini-alarm-row-custom.critical {
+  border-left-color: #ff3d00;
+}
+.mini-alarm-row-custom.warning {
+  border-left-color: #ff9100;
+}
+.mini-alarm-row-custom.info {
+  border-left-color: #00d2ff;
+}
+
+.mini-alarm-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mini-alarm-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.mini-alarm-code {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: monospace;
+}
+
+.mini-alarm-severity {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.mini-alarm-severity.badge-critical {
+  background-color: rgba(255, 61, 0, 0.1);
+  color: #ff3d00;
+}
+
+.mini-alarm-severity.badge-warning {
+  background-color: rgba(255, 145, 0, 0.1);
+  color: #ff9100;
+}
+
+.mini-alarm-severity.badge-info {
+  background-color: rgba(0, 210, 255, 0.1);
+  color: #00d2ff;
+}
+
+.mini-alarm-time {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.mini-alarm-desc {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.mini-alarm-status-row {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  padding-top: 6px;
+}
+
+.mini-alarm-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mini-alarm-status.status-resolved {
+  color: #00e676;
+}
+.mini-alarm-status.status-processing {
+  color: #ff9100;
+}
+.mini-alarm-status.status-scheduled {
+  color: #00d2ff;
+}
+.mini-alarm-status.status-emergency {
+  color: #ff3d00;
+}
+
+.no-alarms-custom {
+  padding: 24px;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.01);
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+/* Product Information Panel */
+.detail-product-panel {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.product-info-grid-custom {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .product-info-grid-custom {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.product-info-item-custom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.info-label-custom {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.info-value-custom {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Date/Month Input Styling */
+.date-picker-input-custom,
+.month-picker-input-custom {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 14px;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.02em;
+  cursor: pointer; /* Change cursor style since it is click-to-open */
+}
+
+.date-picker-input-custom:hover,
+.month-picker-input-custom:hover {
+  border-color: rgba(0, 210, 255, 0.3);
+  background: rgba(15, 23, 42, 0.65);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.1);
+}
+
+.date-picker-input-custom:focus,
+.month-picker-input-custom:focus {
+  border-color: #00d2ff;
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Calendar icon theme color overrides for standard dark webkits */
+.date-picker-input-custom::-webkit-calendar-picker-indicator,
+.month-picker-input-custom::-webkit-calendar-picker-indicator {
+  filter: invert(0.9) sepia(1) saturate(5) hue-rotate(180deg);
+  cursor: pointer;
+  opacity: 0.85;
+  transition: all 0.2s ease-in-out;
+}
+
+.date-picker-input-custom::-webkit-calendar-picker-indicator:hover,
+.month-picker-input-custom::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* Toggle Buttons Active State */
+.toggle-mode-btn-custom.active {
+  background: #00d2ff !important;
+  color: #0b1426 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.3);
+}
+
+.toggle-mode-btn-custom:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.btn-export-excel-custom:hover {
+  background: rgba(0, 210, 255, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-export-excel-custom:active {
+  transform: translateY(0);
+}
+
+/* Detail Stats Grid 3-column override */
+.detail-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+  .detail-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Detail Stat Cards Color Alignments */
+.detail-stat-card .stat-card-value {
+  color: #00d2ff !important; /* Cyan stats values by default */
+}
+
+.detail-stat-card .stat-card-value .val-white {
+  color: #ffffff !important; /* Target and Order bases remain white */
+}
+
+/* Unit and helper spacing */
+.detail-stat-card .stat-card-value .unit {
+  font-size: 0.9rem;
+  margin-left: 3px;
+}
+
+/* Stamping Dual-Image Animation Overrides */
+.stamp-image-viewport {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  background-color: #0c1527;
+  overflow: hidden;
+}
+
+.machine-stamp-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: none !important; /* Disable active transitions to eliminate flickering */
+}
+
+.machine-stamp-image.img-open {
+  opacity: 1;
+  z-index: 1;
+  transform: none !important;
+}
+
+.machine-stamp-image.img-pressed {
+  opacity: 0;
+  z-index: 2;
+  transform: translateX(8px) scaleX(0.97) !important; /* Scale horizontally only, keep vertical scale at 1.0 */
+}
+
+/* Keep the machine card frame completely stationary (avoid cut-offs) */
+.machine-stamp-card.running-animation {
+  animation: none !important;
+}
+
+/* Animations when running - smooth crossfade transitions stretched to 1.6s (slower) */
+.machine-stamp-card.running-animation .machine-stamp-image.img-open {
+  animation: stamping-open-image 1.6s infinite ease-in-out !important;
+}
+
+.machine-stamp-card.running-animation .machine-stamp-image.img-pressed {
+  animation: stamping-pressed-image 1.6s infinite ease-in-out !important;
+}
+
+.machine-stamp-card.running-animation .stamp-glow {
+  animation: stamp-glow-flash 1.6s infinite ease-in-out !important;
+}
+
+@keyframes stamping-open-image {
+  0%, 35% { opacity: 1; }
+  45%, 55% { opacity: 0; }
+  65%, 100% { opacity: 1; }
+}
+
+@keyframes stamping-pressed-image {
+  0%, 35% { opacity: 0; }
+  45%, 55% { opacity: 1; }
+  65%, 100% { opacity: 0; }
+}
+
+@keyframes stamp-glow-flash {
+  0%, 35% { opacity: 0; }
+  45%, 55% { opacity: 0.45; }
+  65%, 100% { opacity: 0; }
+}

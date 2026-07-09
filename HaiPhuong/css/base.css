@@ -1,0 +1,84 @@
+/* style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Colors from design: Deep navy dark theme */
+  --bg-primary: #070c17;
+  --bg-secondary: #0c1527;
+  --bg-sidebar: #040810;
+  
+  --accent-blue: #00d2ff;
+  --accent-blue-glow: rgba(0, 210, 255, 0.15);
+  --border-color: #16223f;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #7f91a8;
+  --text-muted: #4e5b6e;
+  
+  --status-running: #00e676;
+  --status-stopped: #ff3d00;
+  
+  --sidebar-width: 260px;
+  --header-height: 80px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.placeholder-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 60vh;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 800px;
+  margin: 40px auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.placeholder-icon {
+  width: 60px;
+  height: 60px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  opacity: 0.6;
+}
+
+.placeholder-icon.color-alert {
+  color: var(--status-stopped);
+  opacity: 0.8;
+}
+
+.placeholder-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.placeholder-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  max-width: 450px;
+  line-height: 1.5;
+}
+
+/* Overview Layout Shell */

@@ -1,0 +1,13 @@
+# Git Ignore
+.agent
+.claude
+.specs
+.vs
+packages/
+
+# CafeKit / Ecosystem
+specs/_shared/
+plans/
+!plans/templates/
+.cafekit-backup/
+.cafekit.lock

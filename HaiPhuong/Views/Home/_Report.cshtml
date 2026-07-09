@@ -1,0 +1,227 @@
+        <section id="view-report" class="view-section hidden">
+          <div class="report-layout">
+             <!-- Filter Bar (Time frame, Machine, Export) -->
+            <div class="report-filter-bar">
+              <div class="filter-segment-group">
+                <span class="filter-segment-title" data-i18n="report_timerange_lbl_lower">Khoảng thời gian</span>
+                <div class="segment-control" id="report-time-segments">
+                  <button class="segment-btn active" data-range="day" data-i18n="report_btn_day">NGÀY</button>
+                  <button class="segment-btn" data-range="week" data-i18n="report_btn_week">TUẦN</button>
+                  <button class="segment-btn" data-range="month" data-i18n="report_btn_month">THÁNG</button>
+                  <button class="segment-btn" data-range="year" data-i18n="report_btn_year">NĂM</button>
+                </div>
+              </div>
+
+               <div class="filter-date-group" id="report-date-filter-group" style="display: flex; flex-direction: column; gap: 6px;">
+                 <span class="filter-select-title" id="report-date-filter-title">Chọn Ngày</span>
+                 <div class="date-picker-wrapper" style="position: relative; display: flex; align-items: center; gap: 10px;">
+                   <input type="text" id="report-date-picker" class="custom-date-input" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; outline: none; font-size: 0.85rem; font-family: inherit; width: 160px; height: 38px; box-sizing: border-box;">
+                   <input type="text" id="report-month-picker" class="custom-date-input hidden" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; outline: none; font-size: 0.85rem; font-family: inherit; width: 160px; height: 38px; box-sizing: border-box;">
+                   <div class="custom-select-wrapper hidden" id="report-year-picker-wrapper" style="width: 120px;">
+                     <select id="report-year-picker" style="width: 100%;">
+                       <option value="2026">2026</option>
+                       <option value="2025">2025</option>
+                       <option value="2024">2024</option>
+                       <option value="2023">2023</option>
+                     </select>
+                   </div>
+                 </div>
+               </div>
+
+              <div class="filter-select-group">
+                <span class="filter-select-title" data-i18n="report_machine_select_title">Chọn Máy</span>
+                <div class="custom-select-wrapper">
+                  <select id="report-machine-select">
+                    <option value="all" data-i18n="report_all_presses">Tất cả máy dập</option>
+                    <option value="01">Máy dập 01</option>
+                    <option value="02">Máy dập 02</option>
+                    <option value="03">Máy dập 03</option>
+                    <option value="04">Máy dập 04</option>
+                    <option value="05">Máy dập 05</option>
+                    <option value="06">Máy dập 06</option>
+                    <option value="07">Máy dập 07</option>
+                    <option value="08">Máy dập 08</option>
+                    <option value="09">Máy dập 09</option>
+                    <option value="10">Máy dập 10</option>
+                  </select>
+                </div>
+              </div>
+
+              <button class="export-btn font-bold" id="report-export-btn">
+                <svg class="export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span data-i18n="report_btn_export_data">XUẤT DỮ LIỆU (CSV/PDF)</span>
+              </button>
+            </div>
+
+            <!-- KPI Row (6 Cards) -->
+            <div class="report-kpi-row">
+              <!-- Card 1: Strokes / Plan -->
+              <div class="r-kpi-card">
+                <div class="r-kpi-content" style="width: 100%;">
+                  <span class="r-kpi-label" data-i18n="report_kpi_strokes_target">SẢN LƯỢNG / KẾ HOẠCH NGÀY</span>
+                  <span class="r-kpi-value" id="r-kpi-strokes-target" style="font-weight: 700;">
+                    <span style="color: #00d2ff;">0</span> / <span style="color: #ffffff;">0</span>
+                  </span>
+                  <span class="r-kpi-subtext" id="r-kpi-strokes-target-pct" style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px;">0%</span>
+                </div>
+              </div>
+
+              <!-- Card 2: Order Progress -->
+              <div class="r-kpi-card">
+                <div class="r-kpi-content" style="width: 100%;">
+                  <span class="r-kpi-label" data-i18n="report_kpi_order_progress">TIẾN ĐỘ ĐƠN HÀNG</span>
+                  <span class="r-kpi-value" id="r-kpi-order-progress" style="font-weight: 700;">
+                    <span style="color: #00d2ff;">0</span> / <span style="color: #ffffff;">0</span>
+                  </span>
+                  <span class="r-kpi-subtext" id="r-kpi-order-progress-pct" style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px;">0%</span>
+                </div>
+              </div>
+
+              <!-- Card 3: OEE -->
+              <div class="r-kpi-card">
+                <div class="r-kpi-content" style="width: 100%;">
+                  <span class="r-kpi-label" data-i18n="report_kpi_oee">HIỆU SUẤT SẢN LƯỢNG (OEE)</span>
+                  <span class="r-kpi-value" id="r-kpi-oee" style="color: #00d2ff; font-weight: 700;">0%</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thực tế / Kế hoạch</span>
+                </div>
+              </div>
+
+              <!-- Card 4: Time Efficiency -->
+              <div class="r-kpi-card">
+                <div class="r-kpi-content" style="width: 100%;">
+                  <span class="r-kpi-label" data-i18n="report_kpi_time_eff">HIỆU SUẤT THỜI GIAN</span>
+                  <span class="r-kpi-value" id="r-kpi-time-eff" style="color: #00d2ff; font-weight: 700;">0%</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian chạy / Thời gian ca</span>
+                </div>
+              </div>
+
+              <!-- Card 5: Trial Time -->
+              <div class="r-kpi-card">
+                <div class="r-kpi-content" style="width: 100%;">
+                  <span class="r-kpi-label" data-i18n="report_kpi_trial_time">THỜI GIAN CHẠY THỬ MÁY</span>
+                  <span class="r-kpi-value" id="r-kpi-trial-time" style="color: #00d2ff; font-weight: 700;">00:00:00</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian chạy thử máy</span>
+                </div>
+              </div>
+
+              <!-- Card 6: Running Time -->
+              <div class="r-kpi-card">
+                <div class="r-kpi-content" style="width: 100%;">
+                  <span class="r-kpi-label" data-i18n="report_kpi_run_time">THỜI GIAN CHẠY MÁY</span>
+                  <span class="r-kpi-value" id="r-kpi-run-time" style="color: #00d2ff; font-weight: 700;">00:00:00</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian chạy máy</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Operational Charts Row -->
+            <div class="report-charts-row">
+              <!-- Operating Performance Chart -->
+              <div class="r-chart-panel">
+                <div class="r-chart-panel-header">
+                  <h3 class="r-chart-panel-title" data-i18n="report_chart_performance_title">Biểu Đồ Hiệu Suất Vận Hành</h3>
+                  <div class="r-chart-legend" style="display: flex; gap: 12px;">
+                    <span class="legend-item"><span class="legend-dot" style="background-color: #ffd600;"></span><span data-i18n="report_legend_trial">Chạy thử</span></span>
+                    <span class="legend-item"><span class="legend-dot" style="background-color: #00e676;"></span><span data-i18n="report_legend_running">Máy chạy</span></span>
+                    <span class="legend-item"><span class="legend-dot" style="background-color: #ef4444;"></span><span data-i18n="report_legend_stopped">Thời gian dừng</span></span>
+                  </div>
+                </div>
+                <div class="r-chart-canvas-wrapper">
+                  <canvas id="operating-performance-chart"></canvas>
+                </div>
+              </div>
+
+              <!-- Yield Target Achievement Panel -->
+              <div class="stability-panel" id="achievement-panel-container">
+                <h3 class="stability-title" data-i18n="history_chart_achievement_title">PHÂN TÍCH ĐẠT MỤC TIÊU SẢN LƯỢNG</h3>
+                <div class="chart-canvas-wrapper" style="height: 180px; width: 100%; display: flex; justify-content: center; align-items: center; position: relative;">
+                  <canvas id="history-achievement-chart" style="max-height: 160px; max-width: 160px;"></canvas>
+                </div>
+                <div class="achievement-legend-custom" style="width: 100%; display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span class="legend-item"><span class="legend-dot" style="background-color: #00ff00;"></span><span data-i18n="achievement_legend_standard">Đạt chuẩn (100%)</span></span>
+                    <span id="achievement-count-standard" style="color: #fff; font-weight: 700;">--</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span class="legend-item"><span class="legend-dot" style="background-color: #ef4444;"></span><span data-i18n="achievement_legend_low">Không đạt (< 100%)</span></span>
+                    <span id="achievement-count-low" style="color: #fff; font-weight: 700;">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Row: Performance Chart & Stability Gauge -->
+            <div class="history-bottom-row" style="margin-top: 30px; margin-bottom: 30px;">
+              <!-- Weekly Performance Panel -->
+              <div class="chart-panel">
+                <div class="chart-panel-header">
+                  <h3 class="chart-panel-title" data-i18n="history_chart_performance_title">Phân Tích Hiệu Suất Sản Lượng</h3>
+                  <p class="chart-panel-subtitle" data-i18n="history_chart_performance_desc">So sánh sản lượng mục tiêu vs thực tế</p>
+                  <div class="chart-legend">
+                    <span class="legend-item"><span class="legend-dot actual"></span><span data-i18n="history_legend_actual">Thực tế</span></span>
+                    <span class="legend-item"><span class="legend-dot target"></span><span data-i18n="history_legend_target">Mục tiêu</span></span>
+                  </div>
+                </div>
+                <div class="chart-canvas-wrapper">
+                  <canvas id="weekly-performance-chart"></canvas>
+                </div>
+              </div>
+
+              <!-- Yield Performance Donut -->
+              <div class="r-distribution-panel">
+                <h3 class="r-chart-panel-title" data-i18n="report_chart_efficiency_title">Hiệu Suất Sản Lượng</h3>
+                <div class="r-pie-chart-wrapper">
+                  <div class="r-pie-canvas-container">
+                    <canvas id="yield-efficiency-chart"></canvas>
+                    <div class="r-pie-center-text">
+                      <span class="total-errors-val" id="r-yield-efficiency-pct" style="font-size: 1.6rem; font-weight: 800; color: #fff;">0%</span>
+                      <span class="total-errors-lbl" data-i18n="report_chart_yield_progress" style="font-size: 0.65rem; text-transform: uppercase; margin-top: 2px;">Đạt mục tiêu</span>
+                    </div>
+                  </div>
+                  <div class="r-pie-legend" id="r-yield-legend-container" style="display: flex; flex-direction: column; gap: 10px; justify-content: center; margin-left: 20px;">
+                    <div class="legend-item" style="display: flex; justify-content: space-between; font-size: 0.8rem; width: 140px;">
+                      <span><span class="legend-dot" style="background-color: #00d2ff;"></span><span data-i18n="report_legend_actual">Thực tế</span></span>
+                      <span id="r-yield-legend-actual" style="color: #fff; font-weight: 700;">0</span>
+                    </div>
+                    <div class="legend-item" style="display: flex; justify-content: space-between; font-size: 0.8rem; width: 140px;">
+                      <span><span class="legend-dot" style="background-color: #16223f; border: 1px solid #4e5b6e;"></span><span data-i18n="report_legend_remaining">Còn lại</span></span>
+                      <span id="r-yield-legend-remaining" style="color: #fff; font-weight: 700;">0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Operations Table Panel -->
+            <div class="report-table-panel">
+              <div class="r-table-header">
+                <h3 class="r-table-title" data-i18n="report_table_title">CHI TIẾT VẬN HÀNH THEO CA</h3>
+                <a href="javascript:void(0)" class="r-history-link" id="report-view-history-link" data-i18n="report_table_history_link">Xem lịch sử đầy đủ</a>
+              </div>
+              <div class="r-table-container">
+                <table class="report-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="report_tbl_col_shift_lbl">CA LÀM VIỆC</th>
+                      <th data-i18n="report_tbl_col_press_lbl">MÁY DẬP</th>
+                      <th data-i18n="history_tbl_col_strokes" style="text-align: center;">SẢN LƯỢNG THỰC TẾ</th>
+                      <th data-i18n="report_kpi_uptime" style="text-align: center;">THỜI GIAN HOẠT ĐỘNG</th>
+                      <th data-i18n="report_kpi_downtime" style="text-align: center;">THỜI GIAN DỪNG MÁY</th>
+                      <th data-i18n="report_tbl_col_oee_lbl" style="text-align: center;">HIỆU SUẤT (OEE)</th>
+                      <th data-i18n="history_tbl_col_status" style="text-align: center;">TRẠNG THÁI</th>
+                    </tr>
+                  </thead>
+                  <tbody id="report-table-body">
+                    <!-- Dynamically rendered via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. VIEW CẢNH BÁO -->

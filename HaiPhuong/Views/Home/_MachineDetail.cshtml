@@ -1,0 +1,174 @@
+        <section id="view-machine-detail" class="view-section hidden">
+          <div class="machine-detail-layout">
+            <!-- Top Action Bar (Back button and Title) -->
+            <div class="detail-action-bar">
+              <button class="back-btn" id="machine-detail-back-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px;">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span data-i18n="btn_back_to_overview">Quay lại Tổng quan</span>
+              </button>
+              
+              <div class="detail-title-block">
+                <h2 class="detail-main-title" id="machine-detail-title">MÁY DẬP SỐ #01</h2>
+                <div class="machine-status-badge" style="margin-top: 4px;">
+                  <span class="status-indicator-dot running" id="machine-detail-status-dot"></span>
+                  <span class="status-text text-running" id="machine-detail-status-text">ĐANG HOẠT ĐỘNG</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Detail Grid -->
+            <div class="detail-grid">
+              <!-- Left Column: Heavy Stamp Animation & Speed -->
+              <div class="detail-left-col">
+                <div class="machine-stamp-card" id="machine-stamp-card">
+                  <div class="stamp-image-viewport">
+                    <img src="@Url.Content("~/Image/maydap.jpeg")" alt="Stamping Press" class="machine-stamp-image img-open" id="machine-detail-stamp-img">
+                    <img src="@Url.Content("~/Image/maydap_2.jpeg")" alt="Stamping Press" class="machine-stamp-image img-pressed" id="machine-detail-stamp-img-2">
+                    <!-- Glow indicator on impact -->
+                    <div class="stamp-glow" id="machine-detail-stamp-glow"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Product Info, Stats & Chart -->
+              <div class="detail-right-col">
+                <!-- Product Information Panel -->
+                <div class="detail-product-panel" style="margin-bottom: 24px;">
+                  <div class="panel-header" style="margin-bottom: 15px;">
+                    <h3 class="panel-title" data-i18n="product_info_title">THÔNG TIN SẢN PHẨM</h3>
+                  </div>
+                  <div class="product-info-grid-custom">
+                    <div class="product-info-item-custom">
+                      <span class="info-label-custom">Mã sản phẩm:</span>
+                      <span class="info-value-custom" id="product-detail-code">-</span>
+                    </div>
+                    <div class="product-info-item-custom">
+                      <span class="info-label-custom">Tên sản phẩm:</span>
+                      <span class="info-value-custom" id="product-detail-name">-</span>
+                    </div>
+                    <div class="product-info-item-custom">
+                      <span class="info-label-custom">Lô sản xuất:</span>
+                      <span class="info-value-custom" id="product-detail-batch">-</span>
+                    </div>
+                    <div class="product-info-item-custom">
+                      <span class="info-label-custom">Sản lượng dự kiến:</span>
+                      <span class="info-value-custom" id="product-detail-plan">-</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Daily Stats Panel (Phần 1) -->
+                <div class="detail-section-part1" style="margin-bottom: 28px;">
+                  <div class="section-part-header-custom" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                      <h3 class="panel-title" data-i18n="part1_daily_title">THỐNG KÊ THEO NGÀY</h3>
+                      <p class="panel-subtitle" style="font-size: 0.75rem; color: var(--text-secondary);">Chỉ số vận hành chi tiết trong 24 giờ</p>
+                    </div>
+                    <div class="single-date-picker-wrapper-custom" style="display: flex; align-items: center; gap: 8px;">
+                      <span class="datepicker-label-custom" style="font-size: 0.8rem; color: var(--text-secondary);">Chọn ngày:</span>
+                      <input type="text" id="detail-single-date" class="date-picker-input-custom" readonly>
+                    </div>
+                  </div>
+                  <div class="detail-stats-grid">
+                    <!-- 1. Sản lượng / Kế hoạch ngày -->
+                    <div class="detail-stat-card">
+                      <span class="stat-card-label">SẢN LƯỢNG / KẾ HOẠCH NGÀY</span>
+                      <span class="stat-card-value value-highlight" id="machine-detail-strokes-target-val">0 / 0</span>
+                      <span class="stat-card-desc" id="machine-detail-strokes-target-pct">0%</span>
+                    </div>
+                    <!-- 2. Tiến độ đơn hàng -->
+                    <div class="detail-stat-card">
+                      <span class="stat-card-label">TIẾN ĐỘ ĐƠN HÀNG</span>
+                      <span class="stat-card-value" id="machine-detail-strokes-order-val">0 / 0</span>
+                      <span class="stat-card-desc" id="machine-detail-strokes-order-pct">0%</span>
+                    </div>
+                    <!-- 3. Hiệu suất sản lượng (OEE) -->
+                    <div class="detail-stat-card">
+                      <span class="stat-card-label">HIỆU SUẤT SẢN LƯỢNG (OEE)</span>
+                      <span class="stat-card-value" id="machine-detail-oee-val">0%</span>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thực tế / Kế hoạch</span>
+                    </div>
+                    <!-- 4. Hiệu suất thời gian -->
+                    <div class="detail-stat-card">
+                      <span class="stat-card-label">HIỆU SUẤT THỜI GIAN</span>
+                      <span class="stat-card-value" id="machine-detail-time-eff-val">0%</span>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thời gian chạy / Thời gian ca</span>
+                    </div>
+                    <!-- 5. Thời gian chạy thử máy -->
+                    <div class="detail-stat-card">
+                      <span class="stat-card-label">THỜI GIAN CHẠY THỬ MÁY</span>
+                      <span class="stat-card-value" id="machine-detail-trial-val">00:00:00</span>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thời gian chạy thử máy</span>
+                    </div>
+                    <!-- 6. Thời gian chạy máy -->
+                    <div class="detail-stat-card">
+                      <span class="stat-card-label">THỜI GIAN CHẠY MÁY</span>
+                      <span class="stat-card-value" id="machine-detail-run-val">00:00:00</span>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thời gian chạy máy</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Production Trend & Filters Panel (Phần 2) -->
+                <div class="detail-section-part2">
+                  <div class="section-part-header-custom" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 24px;">
+                    <div>
+                      <h3 class="panel-title" id="trend-chart-title-custom">XU HƯỚNG SẢN LƯỢNG</h3>
+                      <p class="panel-subtitle">Biểu đồ xu hướng sản lượng dập và cảnh báo liên quan</p>
+                    </div>
+                    <div class="part2-filters-container-custom" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                      <!-- Toggle button Mode -->
+                      <div class="toggle-mode-wrapper-custom" style="display: flex; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 3px;">
+                        <button type="button" class="toggle-mode-btn-custom active" data-mode="day" style="padding: 6px 14px; border: none; background: transparent; color: var(--text-secondary); border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 500; transition: all 0.2s;">Theo ngày</button>
+                        <button type="button" class="toggle-mode-btn-custom" data-mode="month" style="padding: 6px 14px; border: none; background: transparent; color: var(--text-secondary); border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 500; transition: all 0.2s;">Theo tháng</button>
+                      </div>
+                      
+                      <!-- Date Range Pickers (shown when Day mode is active) -->
+                      <div class="range-picker-wrapper-custom" id="part2-range-day" style="display: flex; align-items: center; gap: 6px;">
+                        <input type="text" id="part2-date-range" class="date-picker-input-custom" style="min-width: 200px;" readonly>
+                      </div>
+ 
+                      <!-- Month Range Pickers (shown when Month mode is active) -->
+                      <div class="range-picker-wrapper-custom hidden" id="part2-range-month" style="display: flex; align-items: center; gap: 6px;">
+                        <input type="text" id="part2-month-start" class="month-picker-input-custom" readonly>
+                        <span class="range-divider" style="color: var(--text-secondary); font-size: 0.8rem;">đến</span>
+                        <input type="text" id="part2-month-end" class="month-picker-input-custom" readonly>
+                      </div>
+
+                      <!-- Export Excel Button -->
+                      <button type="button" class="btn-export-excel-custom" id="btn-export-excel" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(0, 210, 255, 0.1); border: 1px solid rgba(0, 210, 255, 0.3); color: #00d2ff; border-radius: 10px; font-size: 0.8rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="excel-icon" style="width: 14px; height: 14px;">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Xuất Excel</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Chart Wrapper -->
+                  <div class="chart-container-wrapper" style="position: relative; height: 260px; width: 100%; margin-bottom: 28px; background: rgba(255,255,255,0.01); border-radius: 16px; padding: 15px; border: 1px solid var(--border-color);">
+                    <canvas id="machine-detail-chart"></canvas>
+                  </div>
+
+                  <!-- Related Alarms (now inside Part 2) -->
+                  <div class="detail-alarms-panel-custom">
+                    <div class="panel-header" style="margin-bottom: 15px;">
+                      <h3 class="panel-title" data-i18n="machine_detail_alarms_title">CẢNH BÁO LIÊN QUAN</h3>
+                      <p class="panel-subtitle" data-i18n="machine_detail_alarms_desc">Các cảnh báo và sự cố trong khoảng thời gian lọc</p>
+                    </div>
+                    <div class="machine-alarms-list-custom" id="machine-detail-alarms-list">
+                      <!-- Dynamically rendered via JS -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. VIEW LỊCH SỬ -->

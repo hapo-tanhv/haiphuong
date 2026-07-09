@@ -1,0 +1,60 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý máy dập - HP System</title>
+  <link rel="stylesheet" href="@Url.Content("~/css/base.css?v=3")">
+  <link rel="stylesheet" href="@Url.Content("~/css/layout.css?v=3")">
+  <link rel="stylesheet" href="@Url.Content("~/css/overview.css?v=3")">
+  <link rel="stylesheet" href="@Url.Content("~/css/machine.css?v=3")">
+  <link rel="stylesheet" href="@Url.Content("~/css/history.css?v=3")">
+  <link rel="stylesheet" href="@Url.Content("~/css/report.css?v=3")">
+  <link rel="stylesheet" href="@Url.Content("~/css/alerts.css?v=3")">
+  <link rel="stylesheet" href="@Url.Content("~/css/settings.css?v=3")">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js" defer></script>
+  <script>
+    window.basePath = '@Url.Content("~/")';
+  </script>
+  <script src="@Url.Content("~/lang/vi.js?v=3")" defer></script>
+  <script src="@Url.Content("~/lang/en.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/state.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/navigation.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/overview.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/machine.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/history.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/report.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/alerts.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/settings.js?v=3")" defer></script>
+  <script src="@Url.Content("~/js/app.js?v=3")" defer></script>
+</head>
+<body>
+  <div class="app-container">
+    @Html.Partial("_Sidebar")
+
+    <!-- Main Layout -->
+    <div class="main-area">
+      @Html.Partial("_Header")
+
+      <!-- Content Views -->
+      <main class="content-container" id="content-container">
+        @Html.Partial("_Overview")
+        @Html.Partial("_MachineList")
+        @Html.Partial("_MachineDetail")
+        @Html.Partial("_History")
+        @Html.Partial("_Report")
+        @Html.Partial("_Alerts")
+        @Html.Partial("_Guide")
+        @Html.Partial("_Settings")
+      </main>
+    </div>
+  </div>
+</body>
+</html>

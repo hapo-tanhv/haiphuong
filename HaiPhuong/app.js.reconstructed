@@ -1,0 +1,2043 @@
+﻿// app.js
+
+// 1. Quản lý trạng thái hệ thống (In-memory State)
+const state = {
+  currentTab: 'overview',
+  selectedMachineId: '03',
+  selectedMachineListId: '01',
+  historySearchQuery: '',
+  historyCurrentPage: 1,
+  historyRowsPerPage: 5,
+  historyStartDate: null,
+  historyEndDate: null,
+  historyStatusFilter: 'all',
+  historyQualityFilter: 'all',
+  reportTimeRange: '24h',
+  reportMachineId: 'all',
+  alarmSearchQuery: '',
+  alarmSeverityFilter: 'all',
+  alarmCurrentPage: 1,
+  alarmRowsPerPage: 5,
+  selectedAlarmId: null,
+  systemName: 'Dây chuyền sản xuất HP-01',
+  operatingArea: 'area2',
+  language: 'vi',
+  downtimeThresholdWarning: 15,
+  downtimeThresholdEmergency: 30,
+  efficiencyThresholdWarning: 85,
+  efficiencyDelay: 60,
+  downtimeAlarmEnabled: true,
+  efficiencyAlarmEnabled: true,
+  usersData: [
+    { name: 'Lê Văn Nam', role: 'Quản lý kỹ thuật (Manager)', initials: 'LN' },
+    { name: 'Nguyễn Thị Mai', role: 'Vận hành viên (Operator)', initials: 'NM' }
+  ]
+};
+
+// Dữ liệu mô phỏng tĩnh của 10 máy dập
+const machinesData = {
+  '01': { name: 'Máy số 01', strokes: '1.125', status: 'running', runtime: '08:45:12', stoptime: '00:15:30', load: 78, trend: [600, 850, 1125, 950] },
+  '02': { name: 'Máy số 02', strokes: '980', status: 'running', runtime: '08:45:12', stoptime: '00:15:30', load: 62, trend: [400, 650, 980, 800] },
+  '03': { name: 'Máy số 03', strokes: '1.256', status: 'running', runtime: '08:45:12', stoptime: '00:15:30', load: 91, trend: [500, 800, 1256, 1000] },
+  '04': { name: 'Máy số 04', strokes: '870', status: 'running', runtime: '08:45:12', stoptime: '00:15:30', load: 55, trend: [300, 500, 870, 700] },
+  '05': { name: 'Máy số 05', strokes: '1.030', status: 'running', runtime: '08:45:12', stoptime: '00:15:30', load: 82, trend: [550, 750, 1030, 900] },
+  '06': { name: 'Máy số 06', strokes: '560', status: 'stopped', runtime: '08:45:12', stoptime: '00:15:30', load: 0, trend: [560, 560, 560, 560] },
+  '07': { name: 'Máy số 07', strokes: '0', status: 'stopped', runtime: '08:45:12', stoptime: '00:15:30', load: 0, trend: [0, 0, 0, 0] },
+  '08': { name: 'Máy số 08', strokes: '760', status: 'running', runtime: '08:45:12', stoptime: '00:15:30', load: 45, trend: [400, 550, 760, 600] },
+  '09': { name: 'Máy số 09', strokes: '1.100', status: 'running', runtime: '08:45:12', stoptime: '00:15:30', load: 74, trend: [500, 750, 1100, 950] },
+  '10': { name: 'Máy số 10', strokes: '320', status: 'stopped', runtime: '08:45:12', stoptime: '00:15:30', load: 0, trend: [320, 320, 320, 320] }
+};
+
+// Bản đồ tiêu đề trang để hỗ trợ cập nhật tiêu đề động đa ngôn ngữ
+const pageHeaders = {
+  vi: {
+    overview: { title: 'TỔNG QUAN HỆ THỐNG', subtitle: 'Giám sát trạng thái máy' },
+    machine: { title: 'CHI TIẾT MÁY DẬP', subtitle: 'Danh sách và thông số chi tiết từng máy dập' },
+    history: { title: 'LỊCH SỬ HOẠT ĐỘNG', subtitle: 'Nhật ký vận hành và các sự kiện' },
+    report: { title: 'BÁO CÁO HIỆU SUẤT HỆ THỐNG', subtitle: 'Phân tích dữ liệu & Hiệu suất' },
+    alert: { title: 'CẢNH BÁO & THÔNG BÁO', subtitle: '' },
+    settings: { title: 'CÀI ĐẶT HỆ THỐNG', subtitle: 'Quản lý tài khoản' }
+  },
+  en: {
+    overview: { title: 'SYSTEM OVERVIEW', subtitle: 'Monitoring status of 10 stamping machines' },
+    machine: { title: 'STAMPING MACHINE DETAILS', subtitle: 'Detailed list and specifications of each stamping machine' },
+    history: { title: 'OPERATIONAL HISTORY', subtitle: 'Operation log and system events' },
+    report: { title: 'SYSTEM PERFORMANCE REPORT', subtitle: 'Data analysis & stamping performance' },
+    alert: { title: 'ALARMS & NOTIFICATIONS', subtitle: 'STATION: HANOI #04 • ONLINE' },
+    settings: { title: 'SYSTEM SETTINGS', subtitle: 'Manage performance, runtime, and alarm thresholds for production line HP-01' }
+  }
+};
+
+function updateHeaderTitle(tabId) {
+  const pageTitle = document.getElementById('page-title');
+  const pageSubtitle = document.getElementById('page-subtitle');
+  if (pageTitle && pageSubtitle) {
+    const lang = state.language || 'vi';
+    const header = pageHeaders[lang][tabId];
+    if (header) {
+      pageTitle.textContent = header.title;
+      pageSubtitle.textContent = header.subtitle;
+    }
+  }
+}
+
+// 2. Logic điều phối định tuyến tab (Navigation Routing)
+function initNavigation() {
+  const navItems = document.querySelectorAll('.nav-item');
+  const viewSections = document.querySelectorAll('.view-section');
+
+  navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const tabId = item.getAttribute('data-tab');
+      if (!tabId || tabId === state.currentTab) return;
+
+      // Cập nhật State hiện tại
+      state.currentTab = tabId;
+
+      // Cập nhật class 'active' trên menu Sidebar
+      navItems.forEach(nav => nav.classList.remove('active'));
+      item.classList.add('active');
+
+      // Chuyển đổi ẩn/hiện các phân vùng Content View
+      viewSections.forEach(section => {
+        if (section.id === `view-${tabId}`) {
+          section.classList.remove('hidden');
+        } else {
+          section.classList.add('hidden');
+        }
+      });
+
+      // Cập nhật Tiêu đề & Phụ đề trên Header động
+      updateHeaderTitle(tabId);
+
+      // Nếu chuyển sang tab máy dập, thực hiện render danh sách máy dập
+      if (tabId === 'machine') {
+        renderMachineList();
+      }
+
+      // Nếu chuyển sang tab lịch sử, thực hiện render bảng lịch sử và biểu đồ
+      if (tabId === 'history') {
+        renderHistoryTable();
+        setTimeout(initWeeklyPerformanceChart, 50);
+      }
+
+      // Nếu chuyển sang tab báo cáo, thực hiện render báo cáo và biểu đồ
+      if (tabId === 'report') {
+        setTimeout(renderReportView, 50);
+      }
+
+      // Nếu chuyển sang tab cảnh báo, thực hiện render cảnh báo
+      if (tabId === 'alert') {
+        renderAlarmsView();
+      }
+
+      // Nếu chuyển sang tab cài đặt, thực hiện render cài đặt
+      if (tabId === 'settings') {
+        renderSettingsView();
+      }
+    });
+  });
+}
+
+// 3. Logic Quy đổi dữ liệu sản lượng sang toạ độ Y của SVG
+// Trục Y của đồ thị: 1500 tương ứng Y=20px (đỉnh), 0 tương ứng Y=110px (đáy)
+function getValueY(value) {
+  const maxY = 20;
+  const minY = 110;
+  const maxValue = 1500;
+  
+  // Tránh giá trị vượt ngưỡng
+  const safeVal = Math.min(Math.max(value, 0), maxValue);
+  return minY - (safeVal / maxValue) * (minY - maxY);
+}
+
+// 4. Cập nhật thông tin chi tiết Máy dập và biểu đồ xu hướng dập tương ứng
+function updateActiveMachineDetails(machineId) {
+  const machine = machinesData[machineId];
+  if (!machine) return;
+
+  // Cập nhật tên và số lượng dập
+  const nameEl = document.getElementById('selected-machine-name');
+  const strokesEl = document.getElementById('selected-machine-strokes');
+  
+  if (nameEl) {
+    nameEl.textContent = state.language === 'vi' ? `Máy số ${machineId}` : `Press #${machineId}`;
+  }
+  if (strokesEl) {
+    const unitText = translations[state.language].overview_strokes_unit;
+    strokesEl.innerHTML = `${machine.strokes} <span class="unit">${unitText}</span>`;
+  }
+
+  // Cập nhật trạng thái chạy/dừng và LED
+  const dotEl = document.getElementById('selected-machine-dot');
+  const statusEl = document.getElementById('selected-machine-status');
+  
+  if (dotEl && statusEl) {
+    if (machine.status === 'running') {
+      dotEl.className = 'status-indicator-dot running';
+      statusEl.className = 'status-text text-running';
+      statusEl.textContent = translations[state.language].active_machine_running;
+    } else {
+      dotEl.className = 'status-indicator-dot stopped';
+      statusEl.className = 'status-text text-stopped';
+      statusEl.textContent = translations[state.language].active_machine_stopped;
+    }
+  }
+
+  // Cập nhật đường cong biểu đồ xu hướng SVG
+  const fillPath = document.getElementById('chart-fill-path');
+  const trendPath = document.getElementById('chart-trend-path');
+  const dots = document.querySelectorAll('.trend-chart-svg circle');
+
+  if (machine.trend && machine.trend.length === 4) {
+    const y0 = getValueY(machine.trend[0]);
+    const y1 = getValueY(machine.trend[1]);
+    const y2 = getValueY(machine.trend[2]);
+    const y3 = getValueY(machine.trend[3]);
+
+    // Tạo chuỗi path Cubic Bezier mượt mà nối 4 điểm
+    const pathD = `M 40,${y0} C 75,${y0} 75,${y1} 110,${y1} C 145,${y1} 145,${y2} 180,${y2} C 215,${y2} 215,${y3} 250,${y3}`;
+    const fillD = `${pathD} L 250,90 L 40,90 Z`;
+
+    if (trendPath) trendPath.setAttribute('d', pathD);
+    if (fillPath) fillPath.setAttribute('d', fillD);
+
+    // Cập nhật toạ độ Y của 4 nút chấm tròn dữ liệu
+    if (dots.length === 4) {
+      dots[0].setAttribute('cy', y0.toString());
+      dots[1].setAttribute('cy', y1.toString());
+      dots[2].setAttribute('cy', y2.toString());
+      dots[3].setAttribute('cy', y3.toString());
+    }
+  }
+}
+
+// 5. Logic click chọn Máy dập trên Grid lưới
+function initMachineSelection() {
+  const cards = document.querySelectorAll('.machine-grid-card');
+  
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const machineId = card.getAttribute('data-machine-id');
+      if (!machineId || machineId === state.selectedMachineId) return;
+
+      // Cập nhật trạng thái được chọn
+      state.selectedMachineId = machineId;
+
+      // Cập nhật class hiển thị viền sáng selected trên Grid
+      cards.forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+
+      // Đồng bộ hóa khu vực chi tiết Máy dập đang hoạt động & SVG chart
+      updateActiveMachineDetails(machineId);
+    });
+  });
+}
+
+// 5.1. Render danh sách máy dập và chức năng tìm kiếm lọc động (Task 5.6)
+function renderMachineList(filterQuery = '') {
+  const container = document.getElementById('machine-list-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const filteredIds = Object.keys(machinesData).filter(id => {
+    const m = machinesData[id];
+    const query = filterQuery.toLowerCase().trim();
+    return m.name.toLowerCase().includes(query) || id.includes(query);
+  });
+
+  if (filteredIds.length === 0) {
+    container.innerHTML = `
+      <div class="no-results">
+        <p>Không tìm thấy máy dập nào phù hợp.</p>
+      </div>
+    `;
+    return;
+  }
+
+  filteredIds.forEach(id => {
+    const m = machinesData[id];
+    const isRunning = m.status === 'running';
+    const statusText = isRunning ? 'ĐANG HOẠT ĐỘNG' : 'MÁY DỪNG';
+    const statusClass = isRunning ? 'running' : 'stopped';
+    const textClass = isRunning ? 'text-running' : 'text-stopped';
+    const isSelected = state.selectedMachineListId === id ? 'selected' : '';
+
+    const card = document.createElement('div');
+    card.className = `machine-list-card ${isSelected}`;
+    card.setAttribute('data-machine-id', id);
+
+    card.innerHTML = `
+      <div class="ml-card-header">
+        <div class="ml-card-thumb-wrapper">
+          <img src="Image/maydap.jpeg" alt="${m.name}" class="ml-card-thumb">
+        </div>
+        <div class="ml-card-title-block">
+          <div class="ml-card-title-row">
+            <h3 class="ml-card-name">${m.name.toUpperCase()}</h3>
+            <svg class="ml-card-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </div>
+          <div class="ml-card-status">
+            <span class="status-indicator-dot ${statusClass}"></span>
+            <span class="status-text ${textClass}">${statusText}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="ml-card-body">
+        <div class="ml-body-row">
+          <div class="ml-body-col">
+            <span class="ml-col-label">STROKE COUNT</span>
+            <span class="ml-col-value value-highlight">${m.strokes} <span class="unit">lần</span></span>
+          </div>
+          <div class="ml-body-col">
+            <span class="ml-col-label">THỜI GIAN CHẠY</span>
+            <span class="ml-col-value">${m.runtime}</span>
+          </div>
+        </div>
+        <div class="ml-body-row" style="margin-top: 15px;">
+          <div class="ml-body-col">
+            <span class="ml-col-label">THỜI GIAN DỪNG</span>
+            <span class="ml-col-value">${m.stoptime}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ml-card-footer">
+        <div class="ml-load-row">
+          <span class="ml-load-label">${translations[lang].machine_list_load.toUpperCase()}</span>
+          <span class="ml-load-value">${m.load}%</span>
+        </div>
+        <div class="ml-load-bar-bg">
+          <div class="ml-load-bar-fill" style="width: ${m.load}%"></div>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.machine-list-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.selectedMachineListId = id;
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function initSearchAndFilter() {
+  const searchInput = document.getElementById('machine-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      renderMachineList(e.target.value);
+    });
+  }
+}
+
+// 5.2. Khởi tạo bộ dữ liệu lịch sử và các hàm hiển thị điều khiển (Task 5.7)
+const historyData = [
+  { machineId: '01', start: '20/05/2024 07:30', end: '20/05/2024 16:45', strokes: '1.125', quality: 98, status: 'running' },
+  { machineId: '03', start: '20/05/2024 08:15', end: '20/05/2024 17:00', strokes: '1.256', quality: 99, status: 'running' },
+  { machineId: '06', start: '20/05/2024 07:00', end: '20/05/2024 11:30', strokes: '560',  quality: 75, status: 'stopped' },
+  { machineId: '09', start: '20/05/2024 07:45', end: '20/05/2024 16:00', strokes: '1.100', quality: 95, status: 'running' },
+  { machineId: '02', start: '20/05/2024 08:30', end: '20/05/2024 17:30', strokes: '980',  quality: 97, status: 'running' },
+  
+  { machineId: '04', start: '21/05/2024 08:00', end: '21/05/2024 17:00', strokes: '870',  quality: 96, status: 'running' },
+  { machineId: '05', start: '21/05/2024 08:15', end: '21/05/2024 17:30', strokes: '1.030', quality: 97, status: 'running' },
+  { machineId: '08', start: '21/05/2024 08:30', end: '21/05/2024 16:45', strokes: '760',  quality: 94, status: 'running' },
+  { machineId: '10', start: '21/05/2024 09:00', end: '21/05/2024 13:00', strokes: '320',  quality: 80, status: 'stopped' },
+  { machineId: '01', start: '21/05/2024 07:30', end: '21/05/2024 16:45', strokes: '1.120', quality: 98, status: 'running' },
+  
+  { machineId: '03', start: '22/05/2024 08:15', end: '22/05/2024 17:00', strokes: '1.240', quality: 99, status: 'running' },
+  { machineId: '02', start: '22/05/2024 08:30', end: '22/05/2024 17:30', strokes: '990',  quality: 98, status: 'running' },
+  { machineId: '06', start: '22/05/2024 07:00', end: '22/05/2024 11:30', strokes: '550',  quality: 76, status: 'stopped' },
+  { machineId: '09', start: '22/05/2024 07:45', end: '22/05/2024 16:00', strokes: '1.080', quality: 95, status: 'running' },
+  { machineId: '04', start: '22/05/2024 08:00', end: '22/05/2024 17:00', strokes: '860',  quality: 96, status: 'running' },
+  
+  { machineId: '05', start: '23/05/2024 08:15', end: '23/05/2024 17:30', strokes: '1.020', quality: 97, status: 'running' },
+  { machineId: '08', start: '23/05/2024 08:30', end: '23/05/2024 16:45', strokes: '750',  quality: 95, status: 'running' },
+  { machineId: '10', start: '23/05/2024 09:00', end: '23/05/2024 13:00', strokes: '310',  quality: 82, status: 'stopped' },
+  { machineId: '01', start: '23/05/2024 07:30', end: '23/05/2024 16:45', strokes: '1.130', quality: 98, status: 'running' },
+  { machineId: '03', start: '23/05/2024 08:15', end: '23/05/2024 17:00', strokes: '1.250', quality: 99, status: 'running' },
+  
+  { machineId: '02', start: '24/05/2024 08:30', end: '24/05/2024 17:30', strokes: '985',  quality: 97, status: 'running' },
+  { machineId: '06', start: '24/05/2024 07:00', end: '24/05/2024 11:30', strokes: '570',  quality: 74, status: 'stopped' },
+  { machineId: '09', start: '24/05/2024 07:45', end: '24/05/2024 16:00', strokes: '1.110', quality: 96, status: 'running' },
+  { machineId: '04', start: '24/05/2024 08:00', end: '24/05/2024 17:00', strokes: '880',  quality: 95, status: 'running' }
+];
+
+function renderHistoryTable() {
+  const tableBody = document.getElementById('history-table-body');
+  const tableInfo = document.getElementById('history-table-info');
+  const pagination = document.getElementById('history-pagination');
+  if (!tableBody || !tableInfo || !pagination) return;
+
+  tableBody.innerHTML = '';
+  
+  const query = state.historySearchQuery.toLowerCase().trim();
+  const filteredRecords = historyData.filter(r => {
+    const machineName = `Máy số ${r.machineId}`.toLowerCase();
+    const machineIdStr = `máy dập ${r.machineId}`.toLowerCase();
+    const matchesSearch = r.machineId.includes(query) || machineName.includes(query) || machineIdStr.includes(query);
+
+    let matchesDate = true;
+    if (state.historyStartDate && state.historyEndDate) {
+      const parts = r.start.split(' ')[0].split('/');
+      const recordDate = new Date(parts[2], parts[1] - 1, parts[0]);
+      recordDate.setHours(0,0,0,0);
+      
+      const start = new Date(state.historyStartDate);
+      start.setHours(0,0,0,0);
+      const end = new Date(state.historyEndDate);
+      end.setHours(0,0,0,0);
+      
+      matchesDate = recordDate >= start && recordDate <= end;
+    }
+
+    const matchesStatus = state.historyStatusFilter === 'all' || r.status === state.historyStatusFilter;
+
+    let matchesQuality = true;
+    if (state.historyQualityFilter === 'high') {
+      matchesQuality = r.quality >= 95;
+    } else if (state.historyQualityFilter === 'low') {
+      matchesQuality = r.quality < 95;
+    }
+
+    return matchesSearch && matchesDate && matchesStatus && matchesQuality;
+  });
+
+  const totalRecords = filteredRecords.length;
+  const totalPages = Math.ceil(totalRecords / state.historyRowsPerPage) || 1;
+
+  if (state.historyCurrentPage > totalPages) {
+    state.historyCurrentPage = totalPages;
+  }
+  if (state.historyCurrentPage < 1) {
+    state.historyCurrentPage = 1;
+  }
+
+  const startIndex = (state.historyCurrentPage - 1) * state.historyRowsPerPage;
+  const endIndex = Math.min(startIndex + state.historyRowsPerPage, totalRecords);
+  const pageRecords = filteredRecords.slice(startIndex, endIndex);
+
+  const lang = state.language || 'vi';
+  if (totalRecords === 0) {
+    tableInfo.textContent = lang === 'vi' ? 'Hiển thị 0 - 0 của 0 bản ghi' : 'Showing 0 - 0 of 0 records';
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+          ${lang === 'vi' ? 'Không tìm thấy lịch sử dập máy nào phù hợp.' : 'No matching stamping history found.'}
+        </td>
+      </tr>
+    `;
+    pagination.innerHTML = '';
+    return;
+  }
+
+  const showText = lang === 'vi' ? 'Hiển thị' : 'Showing';
+  const ofText = lang === 'vi' ? 'của' : 'of';
+  const recordsText = lang === 'vi' ? 'bản ghi' : 'records';
+  tableInfo.textContent = `${showText} ${startIndex + 1} - ${endIndex} ${ofText} ${totalRecords} ${recordsText}`;
+
+  pageRecords.forEach(r => {
+    const isRunning = r.status === 'running';
+    const statusText = isRunning 
+      ? (translations[lang].status_completed || 'HOÀN THÀNH') 
+      : (translations[lang].status_emergency_stop || 'DỪNG KHẨN CẤP');
+    const badgeClass = isRunning ? 'badge-success' : 'badge-danger';
+    const progressColorClass = r.quality >= 90 ? 'green' : 'orange';
+
+    const tr = document.createElement('tr');
+    const pressText = lang === 'vi' ? 'MÁY DẬP' : 'PRESS';
+    tr.innerHTML = `
+      <td>
+        <span style="font-weight: 700;">${pressText} ${r.machineId}</span>
+      </td>
+      <td>${r.start}</td>
+      <td>${r.end}</td>
+      <td style="font-weight: 700; color: #fff;">${r.strokes}</td>
+      <td>
+        <div class="td-progress-bg">
+          <div class="td-progress-fill ${progressColorClass}" style="width: ${r.quality}%"></div>
+        </div>
+        <span class="td-progress-text">${r.quality}%</span>
+      </td>
+      <td>
+        <span class="${badgeClass}">${statusText}</span>
+      </td>
+      <td>
+        <button class="ml-eye-btn" title="Xem chi tiết máy dập này">
+          <svg class="ml-eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </td>
+    `;
+    
+    const eyeBtn = tr.querySelector('.ml-eye-btn');
+    if (eyeBtn) {
+      eyeBtn.addEventListener('click', () => {
+        state.selectedMachineId = r.machineId;
+        
+        const overviewCards = document.querySelectorAll('.machine-grid-card');
+        overviewCards.forEach(c => {
+          if (c.getAttribute('data-machine-id') === r.machineId) {
+            c.classList.add('selected');
+          } else {
+            c.classList.remove('selected');
+          }
+        });
+
+        const overviewNav = document.querySelector('.nav-item[data-tab="overview"]');
+        if (overviewNav) {
+          overviewNav.click();
+        }
+      });
+    }
+
+    tableBody.appendChild(tr);
+  });
+
+  pagination.innerHTML = '';
+  
+  const prevBtn = document.createElement('button');
+  prevBtn.className = `page-link ${state.historyCurrentPage === 1 ? 'disabled' : ''}`;
+  prevBtn.innerHTML = `&lt;`;
+  prevBtn.addEventListener('click', () => {
+    if (state.historyCurrentPage > 1) {
+      state.historyCurrentPage--;
+      renderHistoryTable();
+    }
+  });
+  pagination.appendChild(prevBtn);
+
+  for (let i = 1; i <= totalPages; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.className = `page-link ${state.historyCurrentPage === i ? 'active' : ''}`;
+    pageBtn.textContent = i;
+    pageBtn.addEventListener('click', () => {
+      state.historyCurrentPage = i;
+      renderHistoryTable();
+    });
+    pagination.appendChild(pageBtn);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = `page-link ${state.historyCurrentPage === totalPages ? 'disabled' : ''}`;
+  nextBtn.innerHTML = `&gt;`;
+  nextBtn.addEventListener('click', () => {
+    if (state.historyCurrentPage < totalPages) {
+      state.historyCurrentPage++;
+      renderHistoryTable();
+    }
+  });
+  pagination.appendChild(nextBtn);
+}
+
+let weeklyChart = null;
+
+function initWeeklyPerformanceChart() {
+  const canvas = document.getElementById('weekly-performance-chart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  if (weeklyChart) {
+    weeklyChart.destroy();
+  }
+
+  const lang = state.language || 'vi';
+  const actualData = [11200, 12568, 11800, 13000, 12800, 9500, 8000];
+  const targetData = [12000, 12000, 12000, 12000, 12000, 10000, 8000];
+  
+  const labels = lang === 'vi' 
+    ? ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'] 
+    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  weeklyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: translations[lang].history_legend_actual || 'Thực tế',
+          data: actualData,
+          backgroundColor: '#00d2ff',
+          borderColor: '#00d2ff',
+          borderWidth: 1,
+          borderRadius: 4,
+          barPercentage: 0.6,
+          categoryPercentage: 0.5
+        },
+        {
+          label: translations[lang].history_legend_target || 'Mục tiêu',
+          data: targetData,
+          backgroundColor: '#16223f',
+          borderColor: '#4e5b6e',
+          borderWidth: 1,
+          borderRadius: 4,
+          barPercentage: 0.6,
+          categoryPercentage: 0.5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: '#0c1527',
+          titleColor: '#ffffff',
+          bodyColor: '#7f91a8',
+          borderColor: '#16223f',
+          borderWidth: 1,
+          padding: 10,
+          displayColors: true,
+          font: {
+            family: "'Outfit', sans-serif"
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: '#7f91a8',
+            font: {
+              family: "'Outfit', sans-serif",
+              size: 11
+            }
+          }
+        },
+        y: {
+          grid: {
+            color: '#16223f'
+          },
+          ticks: {
+            color: '#7f91a8',
+            font: {
+              family: "'Outfit', sans-serif",
+              size: 11
+            },
+            callback: function(value) {
+              return value >= 1000 ? (value/1000) + 'k' : value;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Global chart instances for Reports view
+let operatingChartInstance = null;
+let errorChartInstance = null;
+
+function getReportData(range, machineId) {
+  const lang = state.language || 'vi';
+  let factor = 1.0;
+  if (machineId !== 'all') {
+    factor = 0.1;
+    const num = parseInt(machineId);
+    factor = factor * (0.8 + (num % 5) * 0.1);
+  }
+  
+  if (range === '7d') {
+    factor = factor * 7;
+  } else if (range === 'month') {
+    factor = factor * 30;
+  }
+  
+  const strokes = Math.round(128402 * factor);
+  const uptime = parseFloat((22.4 * factor).toFixed(1));
+  const downtime = parseFloat((1.6 * factor).toFixed(1));
+  const maintenance = parseFloat((downtime * 0.375).toFixed(1));
+  const incident = parseFloat((downtime * 0.625).toFixed(1));
+  
+  let oee = 93.3;
+  if (machineId !== 'all') {
+    const num = parseInt(machineId);
+    oee = 90 + (num * 1.3) % 9;
+  }
+  
+  let labels = [];
+  let prodData = [];
+  let errData = [];
+  
+  if (range === '24h') {
+    labels = ['06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+    prodData = [75, 80, 72, 85, 78, 70];
+    errData = [0, 15, 0, 0, 10, 0];
+  } else if (range === '7d') {
+    labels = lang === 'vi' 
+      ? ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN']
+      : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    prodData = [120, 125, 118, 130, 122, 115, 95];
+    errData = [5, 8, 2, 4, 12, 0, 15];
+  } else {
+    labels = lang === 'vi'
+      ? ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4']
+      : ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+    prodData = [450, 480, 460, 490];
+    errData = [25, 15, 30, 10];
+  }
+  
+  if (machineId !== 'all') {
+    prodData = prodData.map(v => Math.round(v * 0.1));
+    errData = errData.map(v => Math.round(v * 0.1));
+  }
+  
+  const baseErrors = Math.round(24 * factor);
+  const mouldErrors = Math.round(baseErrors * 0.5);
+  const pressureErrors = Math.round(baseErrors * 0.33);
+  const otherErrors = baseErrors - mouldErrors - pressureErrors;
+  
+  let tableRows = [];
+  const statusCompleted = lang === 'vi' ? 'Hoàn thành' : 'Completed';
+  const statusMaint = lang === 'vi' ? 'Đang bảo trì' : 'Maintenance';
+  const allMachines = lang === 'vi' ? 'Tất cả' : 'All';
+
+  if (range === '24h') {
+    tableRows = [
+      { shift: lang === 'vi' ? 'Ca Sáng (06:00 - 14:00)' : 'Morning Shift (06:00 - 14:00)', machine: machineId === 'all' ? (lang === 'vi' ? 'Machine P-01' : 'Machine P-01') : `Machine P-${machineId}`, strokes: Math.round(42150 * factor * 10), uptime: '7.8h', downtime: '12m', oee: '96.4%', status: statusCompleted, statusClass: 'badge-running' },
+      { shift: lang === 'vi' ? 'Ca Sáng (06:00 - 14:00)' : 'Morning Shift (06:00 - 14:00)', machine: machineId === 'all' ? (lang === 'vi' ? 'Machine P-02' : 'Machine P-02') : `Machine P-${machineId}`, strokes: Math.round(38900 * factor * 10), uptime: '7.2h', downtime: '48m', oee: '89.2%', status: statusMaint, statusClass: 'badge-info' },
+      { shift: lang === 'vi' ? 'Ca Chiều (14:00 - 22:00)' : 'Afternoon Shift (14:00 - 22:00)', machine: machineId === 'all' ? (lang === 'vi' ? 'Machine P-01' : 'Machine P-01') : `Machine P-${machineId}`, strokes: Math.round(47352 * factor * 10), uptime: '7.4h', downtime: '36m', oee: '94.1%', status: statusCompleted, statusClass: 'badge-running' }
+    ];
+  } else if (range === '7d') {
+    tableRows = [
+      { shift: lang === 'vi' ? 'Tuần này - Ca Sáng' : 'This Week - Morning Shift', machine: machineId === 'all' ? allMachines : `Machine P-${machineId}`, strokes: Math.round(252150 * factor), uptime: '48.5h', downtime: '2.1h', oee: '95.2%', status: statusCompleted, statusClass: 'badge-running' },
+      { shift: lang === 'vi' ? 'Tuần này - Ca Chiều' : 'This Week - Afternoon Shift', machine: machineId === 'all' ? allMachines : `Machine P-${machineId}`, strokes: Math.round(238900 * factor), uptime: '46.2h', downtime: '4.8h', oee: '91.8%', status: statusCompleted, statusClass: 'badge-running' },
+      { shift: lang === 'vi' ? 'Tuần này - Ca Tối' : 'This Week - Night Shift', machine: machineId === 'all' ? allMachines : `Machine P-${machineId}`, strokes: Math.round(187352 * factor), uptime: '40.4h', downtime: '8.6h', oee: '88.5%', status: statusCompleted, statusClass: 'badge-running' }
+    ];
+  } else {
+    tableRows = [
+      { shift: lang === 'vi' ? 'Tháng này - Ca Sáng' : 'This Month - Morning Shift', machine: machineId === 'all' ? allMachines : `Machine P-${machineId}`, strokes: Math.round(1025120 * factor), uptime: '198.5h', downtime: '8.4h', oee: '96.1%', status: statusCompleted, statusClass: 'badge-running' },
+      { shift: lang === 'vi' ? 'Tháng này - Ca Chiều' : 'This Month - Afternoon Shift', machine: machineId === 'all' ? allMachines : `Machine P-${machineId}`, strokes: Math.round(987200 * factor), uptime: '190.2h', downtime: '16.8h', oee: '93.4%', status: statusCompleted, statusClass: 'badge-running' },
+      { shift: lang === 'vi' ? 'Tháng này - Ca Tối' : 'This Month - Night Shift', machine: machineId === 'all' ? allMachines : `Machine P-${machineId}`, strokes: Math.round(847350 * factor), uptime: '180.4h', downtime: '25.6h', oee: '89.7%', status: statusCompleted, statusClass: 'badge-running' }
+    ];
+  }
+  
+  return {
+    strokes: strokes.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US'),
+    uptime,
+    downtime,
+    maintenance: maintenance > 0 ? (maintenance >= 1 ? `${maintenance.toFixed(1)}h` : `${Math.round(maintenance * 60)}m`) : '0m',
+    incident: incident > 0 ? (incident >= 1 ? `${incident.toFixed(1)}h` : `${Math.round(incident * 60)}m`) : '0m',
+    oee: oee.toFixed(1),
+    labels,
+    prodData,
+    errData,
+    baseErrors,
+    mouldErrors,
+    pressureErrors,
+    otherErrors,
+    tableRows
+  };
+}
+
+function renderReportView() {
+  const lang = state.language || 'vi';
+  const data = getReportData(state.reportTimeRange, state.reportMachineId);
+  
+  document.getElementById('r-kpi-strokes').textContent = data.strokes;
+  const hourText = lang === 'vi' ? 'giờ' : 'hours';
+  document.getElementById('r-kpi-uptime').innerHTML = `${data.uptime} <span class="unit">${hourText}</span>`;
+  document.getElementById('r-kpi-uptime-progress').style.width = `${data.oee}%`;
+  
+  const uptimeDescText = lang === 'vi' ? 'Hiệu suất khả dụng: ' : 'Uptime efficiency: ';
+  document.getElementById('r-kpi-uptime-desc').textContent = `${uptimeDescText}${data.oee}%`;
+  document.getElementById('r-kpi-downtime').innerHTML = `${data.downtime} <span class="unit">${hourText}</span>`;
+  document.getElementById('r-kpi-dt-maintenance').textContent = data.maintenance;
+  document.getElementById('r-kpi-dt-incident').textContent = data.incident;
+  
+  const barCtx = document.getElementById('operating-performance-chart');
+  if (barCtx) {
+    if (operatingChartInstance) {
+      operatingChartInstance.destroy();
+    }
+    operatingChartInstance = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: lang === 'vi' ? 'Sản xuất' : 'Production',
+            data: data.prodData,
+            backgroundColor: '#00e676',
+            borderRadius: 6,
+            borderSkipped: false
+          },
+          {
+            label: lang === 'vi' ? 'Lỗi kĩ thuật' : 'Technical Errors',
+            data: data.errData,
+            backgroundColor: 'rgba(255, 61, 0, 0.4)',
+            borderRadius: 6,
+            borderSkipped: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: '#8f9cae',
+              font: {
+                family: 'inherit',
+                size: 11
+              }
+            }
+          },
+          y: {
+            stacked: true,
+            grid: {
+              color: '#16223f'
+            },
+            ticks: {
+              color: '#8f9cae',
+              font: {
+                family: 'inherit',
+                size: 11
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  document.getElementById('r-total-errors-text').textContent = data.baseErrors;
+  
+  const pieCtx = document.getElementById('error-distribution-chart');
+  if (pieCtx) {
+    if (errorChartInstance) {
+      errorChartInstance.destroy();
+    }
+    
+    const errorDataValues = data.baseErrors > 0 ? [data.mouldErrors, data.pressureErrors, data.otherErrors] : [1];
+    const errorDataColors = data.baseErrors > 0 ? ['#00d2ff', '#ff3d00', '#8f9cae'] : ['#16223f'];
+    const pieLabels = lang === 'vi' 
+      ? ['Lỗi khuôn dập', 'Áp suất thấp', 'Khác']
+      : ['Mould Errors', 'Low Pressure', 'Other'];
+    
+    errorChartInstance = new Chart(pieCtx, {
+      type: 'doughnut',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: errorDataValues,
+          backgroundColor: errorDataColors,
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '75%',
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+    
+    const legendContainer = document.getElementById('r-error-legend-container');
+    if (legendContainer) {
+      legendContainer.innerHTML = `
+        <div class="r-legend-row">
+          <div class="r-legend-lbl-group">
+            <span class="r-legend-square" style="background-color: #00d2ff;"></span>
+            <span>${pieLabels[0]}</span>
+          </div>
+          <span class="r-legend-val">${data.mouldErrors}</span>
+        </div>
+        <div class="r-legend-row">
+          <div class="r-legend-lbl-group">
+            <span class="r-legend-square" style="background-color: #ff3d00;"></span>
+            <span>${pieLabels[1]}</span>
+          </div>
+          <span class="r-legend-val">${data.pressureErrors}</span>
+        </div>
+        <div class="r-legend-row">
+          <div class="r-legend-lbl-group">
+            <span class="r-legend-square" style="background-color: #8f9cae;"></span>
+            <span>${pieLabels[2]}</span>
+          </div>
+          <span class="r-legend-val">${data.otherErrors}</span>
+        </div>
+      `;
+    }
+  }
+
+  const tableBody = document.getElementById('report-table-body');
+  if (tableBody) {
+    tableBody.innerHTML = '';
+    data.tableRows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${row.shift}</td>
+        <td>${row.machine}</td>
+        <td>${row.strokes.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}</td>
+        <td>${row.uptime}</td>
+        <td style="color: ${row.downtime !== '0m' && row.downtime !== '12m' ? 'rgba(255, 61, 0, 0.8)' : 'var(--text-primary)'}">${row.downtime}</td>
+        <td style="color: ${parseFloat(row.oee) >= 92 ? 'var(--status-running)' : 'var(--text-primary)'}; font-weight: 700;">${row.oee}</td>
+        <td><span class="badge ${row.statusClass}">${row.status}</span></td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+}
+
+function initReportControls() {
+  const timeSegmentContainer = document.getElementById('report-time-segments');
+  if (timeSegmentContainer) {
+    const btns = timeSegmentContainer.querySelectorAll('.segment-btn');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.reportTimeRange = btn.getAttribute('data-range');
+        renderReportView();
+      });
+    });
+  }
+
+  const machineSelect = document.getElementById('report-machine-select');
+  if (machineSelect) {
+    machineSelect.addEventListener('change', (e) => {
+      state.reportMachineId = e.target.value;
+      renderReportView();
+    });
+  }
+
+  const exportBtn = document.getElementById('report-export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      const data = getReportData(state.reportTimeRange, state.reportMachineId);
+      
+      let csvContent = "\uFEFF";
+      csvContent += "CA LÀM VIỆC,MÁY DẬP,STROKE COUNT,UPTIME,DOWNTIME,HIỆU SUẤT OEE,TRẠNG THÁI\r\n";
+      
+      data.tableRows.forEach(row => {
+        csvContent += `"${row.shift}","${row.machine}","${row.strokes}","${row.uptime}","${row.downtime}","${row.oee}","${row.status}"\r\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `bao_cao_hieu_suat_ca_${state.reportTimeRange}_${state.reportMachineId}_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
+  const historyLink = document.getElementById('report-view-history-link');
+  if (historyLink) {
+    historyLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const historyTab = document.querySelector('[data-tab="history"]');
+      if (historyTab) {
+        historyTab.click();
+      }
+    });
+  }
+}
+
+// Base alarms dataset (initial static mock alarms matching the image)
+let alarmsData = [
+  { id: 'a1', time: '14:22:15', date: '12/10/2024', severity: 'critical', severityText: 'Nghiêm trọng', code: 'ERR-DOWNTIME-902', machine: 'MÁY ÉP #08', desc: 'Áp suất thủy lực vượt ngưỡng cho phép (185 bar). Hệ thống tự động ngắt khẩn cấp.', status: 'processing', statusText: 'Đang xử lý' },
+  { id: 'a2', time: '14:10:45', date: '12/10/2024', severity: 'warning', severityText: 'Cảnh báo', code: 'MAINT-STROKE-COUNT', machine: 'MÁY CẮT #02', desc: 'Số nhịp đạt 500,000. Yêu cầu thay dầu bôi trơn và kiểm tra lưỡi cắt.', status: 'scheduled', statusText: 'Đã lên lịch' },
+  { id: 'a3', time: '13:55:02', date: '12/10/2024', severity: 'info', severityText: 'Thông tin', code: 'SYS-UPTIME-NOTIF', machine: 'TOÀN HỆ THỐNG', desc: 'Hoàn tất sao lưu dữ liệu tự động hàng ngày. Trạng thái ổn định.', status: 'resolved', statusText: 'Hoàn tất' },
+  { id: 'a4', time: '13:42:20', date: '12/10/2024', severity: 'critical', severityText: 'Nghiêm trọng', code: 'CONN-LOST-04', machine: 'CẢM BIẾN NHIỆT #11', desc: 'Mất kết nối với cảm biến nhiệt độ vùng lò hơi. Cảnh báo cháy tiềm ẩn.', status: 'emergency', statusText: 'Khẩn cấp' },
+  { id: 'a5', time: '11:30:15', date: '12/10/2024', severity: 'warning', severityText: 'Cảnh báo', code: 'TEMP-HIGH-02', machine: 'MÁY DẬP #03', desc: 'Nhiệt độ động cơ vượt ngưỡng 75°C. Cần kiểm tra hệ thống quạt tản nhiệt.', status: 'resolved', statusText: 'Hoàn tất' },
+  { id: 'a6', time: '09:15:00', date: '12/10/2024', severity: 'info', severityText: 'Thông tin', code: 'SYS-REPORT-AUTO', machine: 'TOÀN HỆ THỐNG', desc: 'Gửi báo cáo hiệu suất tự động hàng tuần về email quản trị thành công.', status: 'resolved', statusText: 'Hoàn tất' },
+  { id: 'a7', time: '08:45:10', date: '12/10/2024', severity: 'critical', severityText: 'Nghiêm trọng', code: 'E-STOP-PRESSED', machine: 'MÁY DẬP #05', desc: 'Nút nhấn dừng khẩn cấp bị kích hoạt thủ công từ bảng điều khiển.', status: 'resolved', statusText: 'Hoàn tất' }
+];
+
+function initAlarms() {
+  Object.keys(machinesData).forEach(id => {
+    const m = machinesData[id];
+    if (m.status === 'stopped') {
+      const alarmId = `stopped_${id}`;
+      if (!alarmsData.some(a => a.id === alarmId)) {
+        const timeStr = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+        const dateStr = new Date().toLocaleDateString('vi-VN');
+        alarmsData.unshift({
+          id: alarmId,
+          time: timeStr,
+          date: dateStr,
+          severity: 'critical',
+          severityText: 'Nghiêm trọng',
+          code: 'MACHINE-STOPPED-ALERT',
+          machine: `MÁY DẬP #${id}`,
+          desc: `Thiết bị đang dừng hoạt động bất thường (Trạng thái stopped). Yêu cầu kiểm tra kết nối điện hoặc áp suất đầu trục dập.`,
+          status: 'emergency',
+          statusText: 'Khẩn cấp'
+        });
+      }
+    }
+  });
+}
+
+function renderAlarmsView() {
+  const tableBody = document.getElementById('alarm-table-body');
+  const tableInfo = document.getElementById('alarm-table-info');
+  const pagination = document.getElementById('alarm-pagination');
+  if (!tableBody || !tableInfo || !pagination) return;
+
+  const lang = state.language || 'vi';
+  let criticalCount = 0;
+  let warningCount = 0;
+  alarmsData.forEach(a => {
+    if (a.status !== 'resolved') {
+      if (a.severity === 'critical') criticalCount++;
+      if (a.severity === 'warning') warningCount++;
+    }
+  });
+
+  document.getElementById('alarm-kpi-critical').textContent = String(criticalCount).padStart(2, '0');
+  document.getElementById('alarm-kpi-warning').textContent = String(warningCount).padStart(2, '0');
+  
+  const downtimeVal = document.getElementById('alarm-kpi-downtime');
+  if (downtimeVal) {
+    downtimeVal.innerHTML = lang === 'vi' 
+      ? `22 <span class="unit" data-i18n="alarm_unit_minute">Phút</span>` 
+      : `22 <span class="unit" data-i18n="alarm_unit_minute">mins</span>`;
+  }
+  const strokesVal = document.getElementById('alarm-kpi-strokes');
+  if (strokesVal) {
+    strokesVal.textContent = lang === 'vi' ? '124.502' : '124,502';
+  }
+  
+  const query = state.alarmSearchQuery.toLowerCase().trim();
+  const filtered = alarmsData.filter(a => {
+    const matchesSearch = a.code.toLowerCase().includes(query) || 
+                          a.machine.toLowerCase().includes(query) || 
+                          a.desc.toLowerCase().includes(query);
+    const matchesSeverity = state.alarmSeverityFilter === 'all' || a.severity === state.alarmSeverityFilter;
+    return matchesSearch && matchesSeverity;
+  });
+
+  document.getElementById('alarm-count-all').textContent = alarmsData.length;
+
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / state.alarmRowsPerPage) || 1;
+  if (state.alarmCurrentPage > totalPages) state.alarmCurrentPage = totalPages;
+  if (state.alarmCurrentPage < 1) state.alarmCurrentPage = 1;
+
+  const startIdx = (state.alarmCurrentPage - 1) * state.alarmRowsPerPage;
+  const endIdx = Math.min(startIdx + state.alarmRowsPerPage, total);
+  
+  tableInfo.textContent = total > 0 
+    ? (lang === 'vi' 
+        ? `Hiển thị ${startIdx + 1} - ${endIdx} trên tổng số ${total} cảnh báo`
+        : `Showing ${startIdx + 1} - ${endIdx} of ${total} alarms`)
+    : (lang === 'vi' ? "Không tìm thấy cảnh báo nào" : "No alarms found");
+
+  tableBody.innerHTML = '';
+  const paginated = filtered.slice(startIdx, endIdx);
+  
+  const alarmDescMap = {
+    a1: {
+      vi: 'Áp suất thủy lực vượt ngưỡng cho phép (185 bar). Hệ thống tự động ngắt khẩn cấp.',
+      en: 'Hydraulic pressure exceeded threshold limit (185 bar). System triggered emergency shutdown.'
+    },
+    a2: {
+      vi: 'Số nhịp đạt 500,000. Yêu cầu thay dầu bôi trơn và kiểm tra lưỡi cắt.',
+      en: 'Stroke count reached 500,000. Maintenance required for lubrication and cutting edge inspection.'
+    },
+    a3: {
+      vi: 'Hoàn tất sao lưu dữ liệu tự động hàng ngày. Trạng thái ổn định.',
+      en: 'Daily database automated backup completed successfully. System status stable.'
+    },
+    a4: {
+      vi: 'Mất kết nối với cảm biến nhiệt độ vùng lò hơi. Cảnh báo cháy tiềm ẩn.',
+      en: 'Connection lost with boiler temperature sensor. Potential fire hazard warning.'
+    },
+    a5: {
+      vi: 'Nhiệt độ động cơ vượt ngưỡng 75°C. Cần kiểm tra hệ thống quạt tản nhiệt.',
+      en: 'Motor temperature exceeded 75°C. Inspect cooling fan system configuration.'
+    },
+    a6: {
+      vi: 'Gửi báo cáo hiệu suất tự động hàng tuần về email quản trị thành công.',
+      en: 'Weekly automated performance report emailed to administration successfully.'
+    },
+    a7: {
+      vi: 'Nút nhấn dừng khẩn cấp bị kích hoạt thủ công từ bảng điều khiển.',
+      en: 'Emergency stop button manually activated from local control console panel.'
+    }
+  };
+
+  paginated.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', a.id);
+    
+    let badgeClass = 'badge-info-alarm';
+    if (a.severity === 'critical') badgeClass = 'badge-critical';
+    if (a.severity === 'warning') badgeClass = 'badge-warning';
+
+    const severityKeys = {
+      critical: 'status_critical',
+      warning: 'status_warning',
+      info: 'status_info'
+    };
+    const severityLabel = translations[lang][severityKeys[a.severity]] || a.severityText;
+
+    const statusKeys = {
+      emergency: 'status_emergency',
+      processing: 'status_ack',
+      scheduled: 'status_scheduled',
+      resolved: 'status_resolved'
+    };
+    const statusLabel = translations[lang][statusKeys[a.status]] || a.status;
+
+    let statusMarkup = '';
+    if (a.status === 'emergency') {
+      statusMarkup = `
+        <span class="status-alert-pending">
+          <svg class="alarm-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>${statusLabel}</span>
+        </span>
+      `;
+    } else if (a.status === 'processing') {
+      statusMarkup = `
+        <span class="status-alert-progress">
+          <svg class="alarm-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+          <span>${statusLabel}</span>
+        </span>
+      `;
+    } else if (a.status === 'scheduled') {
+      statusMarkup = `
+        <span class="status-alert-scheduled">
+          <svg class="alarm-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>${statusLabel}</span>
+        </span>
+      `;
+    } else {
+      statusMarkup = `
+        <span class="status-alert-resolved">
+          <svg class="alarm-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>${statusLabel}</span>
+        </span>
+      `;
+    }
+
+    const alarmDesc = alarmDescMap[a.id] ? alarmDescMap[a.id][lang] : a.desc;
+    let alarmMachine = a.machine;
+    if (lang === 'en') {
+      alarmMachine = alarmMachine
+        .replace('MÁY DẬP', 'PRESS')
+        .replace('MÁY ÉP', 'PRESS')
+        .replace('MÁY CẮT', 'CUTTER')
+        .replace('TOÀN HỆ THỐNG', 'SYSTEM-WIDE')
+        .replace('CẢM BIẾN NHIỆT', 'TEMP SENSOR');
+    }
+
+    tr.innerHTML = `
+      <td>
+        <div class="alarm-time-cell">
+          <span class="time">${a.time}</span>
+          <span class="date">${a.date}</span>
+        </div>
+      </td>
+      <td>
+        <span class="alarm-level-badge ${badgeClass}">${severityLabel}</span>
+      </td>
+      <td>
+        <div class="alarm-code-cell">
+          <span class="code font-bold">${a.code}</span>
+          <span class="machine">${alarmMachine}</span>
+        </div>
+      </td>
+      <td>${alarmDesc}</td>
+      <td>${statusMarkup}</td>
+    `;
+    
+    tr.addEventListener('click', () => {
+      openAlarmModal(a);
+    });
+
+    tableBody.appendChild(tr);
+  });
+
+  pagination.innerHTML = '';
+  
+  const prevBtn = document.createElement('button');
+  prevBtn.className = `page-link ${state.alarmCurrentPage === 1 ? 'disabled' : ''}`;
+  prevBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  `;
+  if (state.alarmCurrentPage > 1) {
+    prevBtn.addEventListener('click', () => {
+      state.alarmCurrentPage--;
+      renderAlarmsView();
+    });
+  }
+  pagination.appendChild(prevBtn);
+
+  for (let i = 1; i <= totalPages; i++) {
+    const pageBtn = document.createElement('button');
+    pageBtn.className = `page-link ${i === state.alarmCurrentPage ? 'active' : ''}`;
+    pageBtn.textContent = i;
+    pageBtn.addEventListener('click', () => {
+      state.alarmCurrentPage = i;
+      renderAlarmsView();
+    });
+    pagination.appendChild(pageBtn);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = `page-link ${state.alarmCurrentPage === totalPages ? 'disabled' : ''}`;
+  nextBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  `;
+  if (state.alarmCurrentPage < totalPages) {
+    nextBtn.addEventListener('click', () => {
+      state.alarmCurrentPage++;
+      renderAlarmsView();
+    });
+  }
+  pagination.appendChild(nextBtn);
+}
+
+function openAlarmModal(alarm) {
+  const lang = state.language || 'vi';
+  state.selectedAlarmId = alarm.id;
+  
+  const alarmDescMap = {
+    a1: {
+      vi: 'Áp suất thủy lực vượt ngưỡng cho phép (185 bar). Hệ thống tự động ngắt khẩn cấp.',
+      en: 'Hydraulic pressure exceeded threshold limit (185 bar). System triggered emergency shutdown.'
+    },
+    a2: {
+      vi: 'Số nhịp đạt 500,000. Yêu cầu thay dầu bôi trơn và kiểm tra lưỡi cắt.',
+      en: 'Stroke count reached 500,000. Maintenance required for lubrication and cutting edge inspection.'
+    },
+    a3: {
+      vi: 'Hoàn tất sao lưu dữ liệu tự động hàng ngày. Trạng thái ổn định.',
+      en: 'Daily database automated backup completed successfully. System status stable.'
+    },
+    a4: {
+      vi: 'Mất kết nối với cảm biến nhiệt độ vùng lò hơi. Cảnh báo cháy tiềm ẩn.',
+      en: 'Connection lost with boiler temperature sensor. Potential fire hazard warning.'
+    },
+    a5: {
+      vi: 'Nhiệt độ động cơ vượt ngưỡng 75°C. Cần kiểm tra hệ thống quạt tản nhiệt.',
+      en: 'Motor temperature exceeded 75°C. Inspect cooling fan system configuration.'
+    },
+    a6: {
+      vi: 'Gửi báo cáo hiệu suất tự động hàng tuần về email quản trị thành công.',
+      en: 'Weekly automated performance report emailed to administration successfully.'
+    },
+    a7: {
+      vi: 'Nút nhấn dừng khẩn cấp bị kích hoạt thủ công từ bảng điều khiển.',
+      en: 'Emergency stop button manually activated from local control console panel.'
+    }
+  };
+
+  const severityKeys = {
+    critical: 'status_critical',
+    warning: 'status_warning',
+    info: 'status_info'
+  };
+  const severityLabel = translations[lang][severityKeys[alarm.severity]] || alarm.severityText;
+
+  const statusKeys = {
+    emergency: 'status_emergency',
+    processing: 'status_ack',
+    scheduled: 'status_scheduled',
+    resolved: 'status_resolved'
+  };
+  const statusLabel = translations[lang][statusKeys[alarm.status]] || alarm.status;
+
+  const alarmDesc = alarmDescMap[alarm.id] ? alarmDescMap[alarm.id][lang] : alarm.desc;
+  let alarmMachine = alarm.machine;
+  if (lang === 'en') {
+    alarmMachine = alarmMachine
+      .replace('MÁY DẬP', 'PRESS')
+      .replace('MÁY ÉP', 'PRESS')
+      .replace('MÁY CẮT', 'CUTTER')
+      .replace('TOÀN HỆ THỐNG', 'SYSTEM-WIDE')
+      .replace('CẢM BIẾN NHIỆT', 'TEMP SENSOR');
+  }
+
+  document.getElementById('modal-detail-time').textContent = `${alarm.time} ${alarm.date}`;
+  document.getElementById('modal-detail-severity').textContent = severityLabel;
+  document.getElementById('modal-detail-code').textContent = `${alarm.code} (${alarmMachine})`;
+  document.getElementById('modal-detail-desc').textContent = alarmDesc;
+  document.getElementById('modal-detail-status').textContent = statusLabel;
+
+  const ackBtn = document.getElementById('alarm-btn-ack');
+  const resolveBtn = document.getElementById('alarm-btn-resolve');
+  
+  if (alarm.status === 'resolved') {
+    ackBtn.style.display = 'none';
+    resolveBtn.style.display = 'none';
+  } else if (alarm.status === 'processing') {
+    ackBtn.style.display = 'none';
+    resolveBtn.style.display = 'block';
+  } else {
+    ackBtn.style.display = 'block';
+    resolveBtn.style.display = 'block';
+  }
+
+  const modal = document.getElementById('alarm-action-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeAlarmModal() {
+  const modal = document.getElementById('alarm-action-modal');
+  if (modal) modal.classList.add('hidden');
+  state.selectedAlarmId = null;
+}
+
+function initAlarmControls() {
+  const closeBtn = document.getElementById('alarm-modal-close-btn');
+  if (closeBtn) closeBtn.addEventListener('click', closeAlarmModal);
+
+  const modalOverlay = document.getElementById('alarm-action-modal');
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeAlarmModal();
+    });
+  }
+
+  const ackBtn = document.getElementById('alarm-btn-ack');
+  if (ackBtn) {
+    ackBtn.addEventListener('click', () => {
+      if (state.selectedAlarmId) {
+        const alarm = alarmsData.find(a => a.id === state.selectedAlarmId);
+        if (alarm) {
+          alarm.status = 'processing';
+          alarm.statusText = 'Đang xử lý';
+          closeAlarmModal();
+          renderAlarmsView();
+        }
+      }
+    });
+  }
+
+  const resolveBtn = document.getElementById('alarm-btn-resolve');
+  if (resolveBtn) {
+    resolveBtn.addEventListener('click', () => {
+      if (state.selectedAlarmId) {
+        const alarm = alarmsData.find(a => a.id === state.selectedAlarmId);
+        if (alarm) {
+          alarm.status = 'resolved';
+          alarm.statusText = 'Hoàn tất';
+          closeAlarmModal();
+          renderAlarmsView();
+        }
+      }
+    });
+  }
+
+  const severityTabBtns = document.querySelectorAll('#alarm-severity-tabs .alarm-tab-btn');
+  severityTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      severityTabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.alarmSeverityFilter = btn.getAttribute('data-severity');
+      state.alarmCurrentPage = 1;
+      renderAlarmsView();
+    });
+  });
+
+  const searchInput = document.getElementById('alarm-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      state.alarmSearchQuery = e.target.value;
+      state.alarmCurrentPage = 1;
+      renderAlarmsView();
+    });
+  }
+}
+
+const translations = {
+  vi: {
+    nav_overview: "Tổng quan",
+    nav_machine: "Máy dập",
+    nav_history: "Lịch sử",
+    nav_report: "Báo cáo",
+    nav_alert: "Cảnh báo",
+    nav_settings: "Cài đặt",
+    sys_card_lbl: "HỆ THỐNG",
+    sys_card_val: "ỔN ĐỊNH",
+    sys_card_sub: "Dây chuyền đang hoạt động tốt",
+    copyright: "Bản quyền",
+    settings_category: "DANH MỤC",
+    settings_menu_general: "Cấu Hình Chung",
+    settings_menu_users: "Quản Lý Người Dùng",
+    settings_menu_profiles: "Hồ Sơ Máy",
+    settings_menu_thresholds: "Ngưỡng Cảnh Báo",
+    settings_menu_network: "Kết Nối Mạng",
+    settings_storage_lbl: "TRẠNG THÁI LƯU TRỮ",
+    settings_storage_ready: "SẴN SÀNG",
+    settings_storage_db: "Cơ sở dữ liệu: 1.2TB / 1.5TB",
+    settings_header_title: "Cài Đặt Hệ Thống",
+    settings_header_subtitle: "Quản lý tài khoản.",
+    settings_btn_cancel: "Hủy Thay Đổi",
+    settings_btn_save: "Lưu Cấu Hình",
+    settings_panel_general: "Cấu Hình Chung",
+    settings_sys_name: "TÊN HỆ THỐNG",
+    settings_op_area: "KHU VỰC VẬN HÀNH",
+    settings_lang: "NGÔN NGỮ GIAO DIỆN",
+    settings_timezone: "MÚI GIỜ HỆ THỐNG",
+    settings_panel_profiles: "Hồ Sơ Máy & Chỉ Số Đo Lường",
+    metric_strokes: "SỐ LẦN DẬP",
+    metric_strokes_std: "Chuẩn",
+    metric_uptime: "THỜI GIAN CHẠY",
+    metric_uptime_min: "Tối thiểu",
+    metric_downtime: "THỜI GIAN DỪNG",
+    metric_downtime_max: "Tối đa",
+    metric_efficiency: "HIỆU SUẤT",
+    metric_efficiency_target: "Mục tiêu",
+    settings_registered_specs: "THÔNG SỐ KỸ THUẬT ĐÃ ĐĂNG KÝ",
+    settings_col_mac: "MÃ MÁY",
+    settings_col_strokes: "SỐ LẦN DẬP TB (SPM)",
+    settings_col_uptime: "TỈ LỆ UPTIME",
+    settings_col_status: "TRẠNG THÁI",
+    settings_col_act: "HÀNH ĐỘNG",
+    settings_edit_link: "Hiệu chỉnh",
+    status_running: "Hoạt động",
+    settings_panel_thresholds: "Ngưỡng Cảnh Báo Hệ Thống",
+    settings_alerts_active: "2 CẢNH BÁO ĐANG BẬT",
+    alert_downtime_title: "Cảnh báo Thời gian dừng",
+    alert_downtime_desc: "Kích hoạt khi máy dừng quá lâu",
+    alert_downtime_warning: "Ngưỡng Cảnh báo (Phút)",
+    alert_downtime_emergency: "Ngưỡng Khẩn cấp (Phút)",
+    alert_efficiency_title: "Cảnh báo Hiệu suất thấp",
+    alert_efficiency_desc: "Duy trì hiệu suất vận hành chuẩn",
+    alert_efficiency_warning: "Ngưỡng Cảnh báo (%)",
+    alert_efficiency_delay: "Trễ ghi nhận (Giây)",
+    tip_title: "Mẹo tối ưu vận hành",
+    tip_content: "Việc duy trì Số lần dập (Stroke Count) ở mức 115~120 SPM sẽ tối ưu hóa tuổi thọ của khuôn dập lên thêm 15%. Hệ thống sẽ tự động gửi báo cáo nếu hiệu suất giảm xuống dưới ngưỡng 85% trong 10 phút.",
+    settings_panel_users: "Người Dùng Có Quyền Truy Cập",
+    btn_add_user: "+ Thêm Người Dùng",
+    add_user_title: "Thêm Người Dùng Mới",
+    add_user_name_lbl: "Họ và Tên",
+    add_user_role_lbl: "Vai Trò / Quyền Hạn",
+    btn_cancel: "Hủy bỏ",
+    btn_confirm: "Xác nhận",
+    toast_save_success: "Cấu hình hệ thống đã được lưu thành công!",
+    toast_add_user_success: "Đã thêm người dùng mới thành công!"
+  },
+  en: {
+    nav_overview: "Dashboard",
+    nav_machine: "Stamping Machines",
+    nav_history: "History",
+    nav_report: "Reports",
+    nav_alert: "Alarms",
+    nav_settings: "Settings",
+    sys_card_lbl: "SYSTEM",
+    sys_card_val: "STABLE",
+    sys_card_sub: "Production line operating normally",
+    copyright: "Copyright",
+    settings_category: "CATEGORY",
+    settings_menu_general: "General Config",
+    settings_menu_users: "User Management",
+    settings_menu_profiles: "Machine Profiles",
+    settings_menu_thresholds: "Alarm Thresholds",
+    settings_menu_network: "Network Settings",
+    settings_storage_lbl: "STORAGE STATUS",
+    settings_storage_ready: "READY",
+    settings_storage_db: "Database: 1.2TB / 1.5TB",
+    settings_header_title: "System Settings",
+    settings_header_subtitle: "Account Management.",
+    settings_btn_cancel: "Cancel Changes",
+    settings_btn_save: "Save Config",
+    settings_panel_general: "General Config",
+    settings_sys_name: "SYSTEM NAME",
+    settings_op_area: "OPERATING AREA",
+    settings_lang: "INTERFACE LANGUAGE",
+    settings_timezone: "SYSTEM TIMEZONE",
+    settings_panel_profiles: "Machine Profiles & Measurement Indices",
+    metric_strokes: "STROKE COUNT",
+    metric_strokes_std: "Standard",
+    metric_uptime: "RUNTIME (%)",
+    metric_uptime_min: "Minimum",
+    metric_downtime: "DOWNTIME",
+    metric_downtime_max: "Maximum",
+    metric_efficiency: "EFFICIENCY",
+    metric_efficiency_target: "Target",
+    settings_registered_specs: "REGISTERED SPECIFICATIONS",
+    settings_col_mac: "MACHINE CODE",
+    settings_col_strokes: "AVG STROKES (SPM)",
+    settings_col_uptime: "RUNTIME RATE",
+    settings_col_status: "STATUS",
+    settings_col_act: "ACTION",
+    settings_edit_link: "Edit Specs",
+    status_running: "Running",
+    settings_panel_thresholds: "System Alert Thresholds",
+    settings_alerts_active: "2 ALERTS ENABLED",
+    alert_downtime_title: "Downtime Alert Warning",
+    alert_downtime_desc: "Triggers when a machine is stopped for too long",
+    alert_downtime_warning: "Warning Threshold (Min)",
+    alert_downtime_emergency: "Emergency Threshold (Min)",
+    alert_efficiency_title: "Low Efficiency Alert",
+    alert_efficiency_desc: "Maintains target system operation efficiency",
+    alert_efficiency_warning: "Warning Threshold (%)",
+    alert_efficiency_delay: "Record Delay (Sec)",
+    tip_title: "Operation Optimization Tip",
+    tip_content: "Maintaining Stroke Count at 115~120 SPM will optimize press die life expectancy by 15%. System will automatically notify if efficiency drops below 85% for 10 minutes.",
+    settings_panel_users: "Authorized System Users",
+    btn_add_user: "+ Add New User",
+    add_user_title: "Add New User Account",
+    add_user_name_lbl: "Full Name",
+    add_user_role_lbl: "System Access Role",
+    btn_cancel: "Cancel",
+    btn_confirm: "Confirm",
+    toast_save_success: "System configuration saved successfully!",
+    toast_add_user_success: "New user account added successfully!"
+  }
+};
+
+function translateUI(lang) {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (translations[lang] && translations[lang][key]) {
+      if (el.tagName === 'INPUT' && el.type === 'text') {
+        el.placeholder = translations[lang][key];
+      } else {
+        el.textContent = translations[lang][key];
+      }
+    }
+  });
+
+  const sidebarItems = document.querySelectorAll('.sidebar-nav .nav-item');
+  if (sidebarItems.length >= 6) {
+    const keys = ['nav_overview', 'nav_machine', 'nav_history', 'nav_report', 'nav_alert', 'nav_settings'];
+    sidebarItems.forEach((item, idx) => {
+      const span = item.querySelector('span:not(.nav-badge)');
+      if (span && keys[idx]) {
+        span.textContent = translations[lang][keys[idx]];
+      }
+    });
+  }
+
+  const sidebarStatusLabel = document.querySelector('.status-card-label');
+  const sidebarStatusVal = document.querySelector('.status-card-value');
+  const sidebarStatusSub = document.querySelector('.status-card-subtext');
+  if (sidebarStatusLabel) sidebarStatusLabel.textContent = translations[lang].sys_card_lbl;
+  if (sidebarStatusVal) sidebarStatusVal.textContent = translations[lang].sys_card_val;
+  if (sidebarStatusSub) sidebarStatusSub.textContent = translations[lang].sys_card_sub;
+
+  const copyrightText = document.querySelector('.sidebar-footer span:first-child');
+  if (copyrightText) {
+    copyrightText.textContent = `© ${translations[lang].copyright} 2024`;
+  }
+
+  // Translate machine grid cards
+  document.querySelectorAll('.machine-grid-card').forEach(card => {
+    const id = card.getAttribute('data-machine-id');
+    const label = card.querySelector('.machine-card-label');
+    if (label) label.textContent = translations[lang].active_machine_strokes;
+    
+    const valSpan = card.querySelector('.machine-card-value');
+    if (valSpan) {
+      const strokesText = valSpan.firstChild.textContent.trim(); // gets the number
+      valSpan.innerHTML = `${strokesText} <span class="unit">${translations[lang].overview_strokes_unit}</span>`;
+    }
+    
+    const name = card.querySelector('.machine-card-name');
+    if (name) {
+      name.textContent = lang === 'vi' ? `MÁY DẬP ${id}` : `PRESS ${id}`;
+    }
+    
+    const status = card.querySelector('.status-text');
+    if (status) {
+      const m = machinesData[id];
+      if (m) {
+        status.textContent = m.status === 'running' 
+          ? translations[lang].active_machine_running 
+          : translations[lang].active_machine_stopped;
+      }
+    }
+  });
+
+  // Also update active machine details to refresh name translations
+  updateActiveMachineDetails(state.selectedMachineId);
+
+  const machineSelect = document.getElementById('report-machine-select');
+  if (machineSelect) {
+    machineSelect.options[0].textContent = translations[lang].report_all_presses;
+    for (let i = 1; i <= 10; i++) {
+      const pressIdStr = i < 10 ? `0${i}` : `${i}`;
+      if (machineSelect.options[i]) {
+        machineSelect.options[i].textContent = lang === 'vi' ? `Máy dập ${pressIdStr}` : `Stamping Press ${pressIdStr}`;
+      }
+    }
+  }
+
+  const alarmTabs = document.querySelectorAll('#alarm-severity-tabs .alarm-tab-btn');
+  if (alarmTabs.length >= 4) {
+    const allBadge = document.getElementById('alarm-count-all');
+    const countText = allBadge ? allBadge.outerHTML : '';
+    alarmTabs[0].innerHTML = `${translations[lang].alarm_filter_severity_all} ${countText}`;
+    alarmTabs[1].textContent = translations[lang].alarm_filter_severity_critical;
+    alarmTabs[2].textContent = translations[lang].alarm_filter_severity_warning;
+    alarmTabs[3].textContent = translations[lang].alarm_filter_severity_info;
+  }
+
+  const activeTab = document.querySelector('.nav-item.active');
+  if (activeTab) {
+    const tabId = activeTab.getAttribute('data-tab');
+    updateHeaderTitle(tabId);
+    if (tabId === 'machine') {
+      const searchInput = document.getElementById('machine-search-input');
+      const query = searchInput ? searchInput.value : '';
+      renderMachineList(query);
+    } else if (tabId === 'history') {
+      renderHistoryTable();
+      initWeeklyPerformanceChart();
+    } else if (tabId === 'report') {
+      renderReportView();
+    } else if (tabId === 'alert') {
+      renderAlarmsView();
+    }
+  }
+}
+
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast-alert';
+  toast.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>${message}</span>
+  `;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+function renderSettingsView() {
+  document.getElementById('settings-sys-name').value = state.systemName;
+  document.getElementById('settings-op-area').value = state.operatingArea;
+  
+  document.querySelectorAll('.language-selector-buttons .lang-btn').forEach(btn => {
+    if (btn.getAttribute('data-lang') === state.language) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  document.getElementById('settings-downtime-enabled').checked = state.downtimeAlarmEnabled;
+  document.getElementById('settings-downtime-warning').value = state.downtimeThresholdWarning;
+  document.getElementById('settings-downtime-emergency').value = state.downtimeThresholdEmergency;
+
+  document.getElementById('settings-efficiency-enabled').checked = state.efficiencyAlarmEnabled;
+  document.getElementById('settings-efficiency-warning').value = state.efficiencyThresholdWarning;
+  document.getElementById('settings-efficiency-delay').value = state.efficiencyDelay;
+
+  const usersGrid = document.getElementById('settings-users-grid');
+  if (usersGrid) {
+    usersGrid.innerHTML = '';
+    state.usersData.forEach(u => {
+      const card = document.createElement('div');
+      card.className = 'user-card';
+      card.innerHTML = `
+        <div class="user-profile-info">
+          <div class="user-card-avatar">${u.initials}</div>
+          <div class="user-card-details">
+            <span class="user-card-name">${u.name}</span>
+            <span class="user-card-role">${u.role}</span>
+          </div>
+        </div>
+        <svg class="user-action-dots" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="1"></circle>
+          <circle cx="12" cy="5" r="1"></circle>
+          <circle cx="12" cy="19" r="1"></circle>
+        </svg>
+      `;
+      usersGrid.appendChild(card);
+    });
+  }
+}
+
+function initSettingsControls() {
+  const menuItems = document.querySelectorAll('.settings-menu-item');
+  menuItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      menuItems.forEach(m => m.classList.remove('active'));
+      item.classList.add('active');
+      const secId = item.getAttribute('data-sec');
+      const targetSec = document.getElementById(`sec-${secId}`);
+      if (targetSec) {
+        targetSec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  });
+
+  const langVi = document.getElementById('lang-btn-vi');
+  const langEn = document.getElementById('lang-btn-en');
+  
+  if (langVi && langEn) {
+    langVi.addEventListener('click', () => {
+      state.language = 'vi';
+      renderSettingsView();
+      translateUI('vi');
+    });
+    langEn.addEventListener('click', () => {
+      state.language = 'en';
+      renderSettingsView();
+      translateUI('en');
+    });
+  }
+
+  const saveBtn = document.getElementById('settings-btn-save');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      state.systemName = document.getElementById('settings-sys-name').value;
+      state.operatingArea = document.getElementById('settings-op-area').value;
+      
+      state.downtimeAlarmEnabled = document.getElementById('settings-downtime-enabled').checked;
+      state.downtimeThresholdWarning = parseInt(document.getElementById('settings-downtime-warning').value) || 15;
+      state.downtimeThresholdEmergency = parseInt(document.getElementById('settings-downtime-emergency').value) || 30;
+      
+      state.efficiencyAlarmEnabled = document.getElementById('settings-efficiency-enabled').checked;
+      state.efficiencyThresholdWarning = parseInt(document.getElementById('settings-efficiency-warning').value) || 85;
+      state.efficiencyDelay = parseInt(document.getElementById('settings-efficiency-delay').value) || 60;
+
+      const stationText = document.querySelector('.header-title');
+      if (stationText) {
+        stationText.textContent = state.systemName.toUpperCase();
+      }
+
+      if (state.efficiencyAlarmEnabled) {
+        Object.keys(machinesData).forEach(id => {
+          const m = machinesData[id];
+          const efficiency = m.load || 85;
+          if (efficiency < state.efficiencyThresholdWarning && m.status !== 'stopped') {
+            const alarmCode = `LOW-EFF-${id}`;
+            if (!alarmsData.some(a => a.code === alarmCode && a.status !== 'resolved')) {
+              const timeStr = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+              const dateStr = new Date().toLocaleDateString('vi-VN');
+              alarmsData.unshift({
+                id: `low_eff_${id}`,
+                time: timeStr,
+                date: dateStr,
+                severity: 'warning',
+                severityText: state.language === 'vi' ? 'Cảnh báo' : 'Warning',
+                code: alarmCode,
+                machine: `MÁY DẬP #${id}`,
+                desc: state.language === 'vi' 
+                  ? `Hiệu suất máy dập (${efficiency}%) giảm sâu dưới ngưỡng thiết lập (${state.efficiencyThresholdWarning}%).`
+                  : `Machine efficiency (${efficiency}%) dropped below threshold (${state.efficiencyThresholdWarning}%).`,
+                status: 'emergency',
+                statusText: state.language === 'vi' ? 'Khẩn cấp' : 'Emergency'
+              });
+            }
+          }
+        });
+      }
+
+      const successMsg = state.language === 'vi' ? translations.vi.toast_save_success : translations.en.toast_save_success;
+      showToast(successMsg, 'success');
+    });
+  }
+
+  const cancelBtn = document.getElementById('settings-btn-cancel');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      renderSettingsView();
+    });
+  }
+
+  const addUserBtn = document.getElementById('settings-btn-add-user');
+  const addUserModal = document.getElementById('add-user-modal');
+  const addUserCloseBtn = document.getElementById('add-user-close-btn');
+  const addUserCancelBtn = document.getElementById('add-user-btn-cancel');
+  const addUserSubmitBtn = document.getElementById('add-user-btn-submit');
+  
+  if (addUserBtn && addUserModal) {
+    addUserBtn.addEventListener('click', () => {
+      document.getElementById('add-user-name-input').value = '';
+      addUserModal.classList.remove('hidden');
+    });
+  }
+
+  const closeAddUser = () => {
+    if (addUserModal) addUserModal.classList.add('hidden');
+  };
+
+  if (addUserCloseBtn) addUserCloseBtn.addEventListener('click', closeAddUser);
+  if (addUserCancelBtn) addUserCancelBtn.addEventListener('click', closeAddUser);
+
+  if (addUserSubmitBtn) {
+    addUserSubmitBtn.addEventListener('click', () => {
+      const name = document.getElementById('add-user-name-input').value.trim();
+      const role = document.getElementById('add-user-role-select').value;
+      if (!name) return;
+
+      const names = name.split(' ');
+      const initials = names.length > 1 
+        ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
+        : name.slice(0, 2).toUpperCase();
+
+      let roleText = 'Vận hành viên (Operator)';
+      if (role === 'Manager') roleText = 'Quản lý kỹ thuật (Manager)';
+      if (role === 'Admin') roleText = 'Quản trị viên (Administrator)';
+
+      state.usersData.push({
+        name: name,
+        role: roleText,
+        initials: initials
+      });
+
+      closeAddUser();
+      renderSettingsView();
+
+      const toastMsg = state.language === 'vi' ? translations.vi.toast_add_user_success : translations.en.toast_add_user_success;
+      showToast(toastMsg, 'success');
+    });
+  }
+}
+
+function initHistoryControls() {
+  const searchInput = document.getElementById('history-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      state.historySearchQuery = e.target.value;
+      state.historyCurrentPage = 1;
+      renderHistoryTable();
+    });
+  }
+
+  const exportBtn = document.getElementById('history-export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      let csvContent = "\uFEFF";
+      csvContent += "MÃ MÁY,THỜI GIAN BẮT ĐẦU,THỜI GIAN KẾT THÚC,TỔNG SỐ LẦN DẬP,HIỆU SUẤT,TRẠNG THÁI\r\n";
+      
+      historyData.forEach(r => {
+        const statusStr = r.status === 'running' ? "HOÀN THÀNH" : "DỪNG KHẨN CẤP";
+        csvContent += `MÁY DẬP ${r.machineId},${r.start},${r.end},${r.strokes.replace('.', '')},${r.quality}%,${statusStr}\r\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `bao_cao_lich_su_dap_may_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
+  const dateInput = document.getElementById('history-date-range');
+  if (dateInput) {
+    flatpickr(dateInput, {
+      mode: "range",
+      dateFormat: "d/m/Y",
+      defaultDate: ["20/05/2024", "27/05/2024"],
+      onReady: function(selectedDates) {
+        if (selectedDates.length === 2) {
+          state.historyStartDate = selectedDates[0];
+          state.historyEndDate = selectedDates[1];
+        }
+      },
+      onChange: function(selectedDates) {
+        if (selectedDates.length === 2) {
+          state.historyStartDate = selectedDates[0];
+          state.historyEndDate = selectedDates[1];
+        } else if (selectedDates.length === 0) {
+          state.historyStartDate = null;
+          state.historyEndDate = null;
+        }
+        state.historyCurrentPage = 1;
+        renderHistoryTable();
+      }
+    });
+  }
+
+  const filterBtn = document.getElementById('history-filter-btn');
+  const filterDropdown = document.getElementById('history-filter-dropdown');
+  if (filterBtn && filterDropdown) {
+    filterBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      filterDropdown.classList.toggle('hidden');
+    });
+
+    filterDropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    const applyBtn = document.getElementById('filter-apply-btn');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        const statusRadio = document.querySelector('input[name="filter-status"]:checked');
+        const qualityRadio = document.querySelector('input[name="filter-quality"]:checked');
+
+        if (statusRadio) state.historyStatusFilter = statusRadio.value;
+        if (qualityRadio) state.historyQualityFilter = qualityRadio.value;
+
+        if (state.historyStatusFilter !== 'all' || state.historyQualityFilter !== 'all') {
+          filterBtn.style.borderColor = 'var(--accent-blue)';
+          filterBtn.style.color = 'var(--accent-blue)';
+        } else {
+          filterBtn.style.borderColor = '';
+          filterBtn.style.color = '';
+        }
+
+        filterDropdown.classList.add('hidden');
+        state.historyCurrentPage = 1;
+        renderHistoryTable();
+      });
+    }
+
+    const resetBtn = document.getElementById('filter-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        const defaultStatus = document.querySelector('input[name="filter-status"][value="all"]');
+        const defaultQuality = document.querySelector('input[name="filter-quality"][value="all"]');
+
+        if (defaultStatus) defaultStatus.checked = true;
+        if (defaultQuality) defaultQuality.checked = true;
+
+        state.historyStatusFilter = 'all';
+        state.historyQualityFilter = 'all';
+
+        filterBtn.style.borderColor = '';
+        filterBtn.style.color = '';
+
+        filterDropdown.classList.add('hidden');
+        state.historyCurrentPage = 1;
+        renderHistoryTable();
+      });
+    }
+  }
+
+  document.addEventListener('click', () => {
+    if (filterDropdown) filterDropdown.classList.add('hidden');
+  });
+}
+
+function runSystemTests() {
+  console.log("%c--- RUNNING IN-BROWSER UNIT TESTS ---", "color: #00d2ff; font-weight: bold; font-size: 1.1rem;");
+  let passed = 0;
+  let failed = 0;
+
+  function assert(condition, message) {
+    if (condition) {
+      console.log(`%c[PASS] ${message}`, "color: #00e676; font-weight: 500;");
+      passed++;
+    } else {
+      console.error(`[FAIL] ${message}`);
+      failed++;
+    }
+  }
+
+  // Test 1: System State default parameters
+  assert(typeof state === 'object', "state is defined as an object");
+  assert(state.language === 'vi' || state.language === 'en', "state.language is valid");
+  assert(state.systemName === 'Dây chuyền sản xuất HP-01', "state.systemName has correct default");
+  assert(state.downtimeThresholdWarning === 15, "state.downtimeThresholdWarning has correct default");
+
+  // Test 2: i18n Translations validation
+  assert(typeof translations === 'object', "translations dictionary is defined");
+  assert(typeof translations.vi === 'object', "translations.vi is defined");
+  assert(typeof translations.en === 'object', "translations.en is defined");
+
+  // Check keys compatibility
+  const viKeys = Object.keys(translations.vi);
+  const enKeys = Object.keys(translations.en);
+  assert(viKeys.length === enKeys.length, `VI key count (${viKeys.length}) matches EN key count (${enKeys.length})`);
+  
+  let missingKeys = [];
+  viKeys.forEach(k => {
+    if (!translations.en[k]) {
+      missingKeys.push(k);
+    }
+  });
+  assert(missingKeys.length === 0, `All VI keys exist in EN translation dictionary (Missing: ${missingKeys.join(', ')})`);
+
+  // Test 3: User profiles manipulation
+  const initialUserCount = state.usersData.length;
+  state.usersData.push({ name: 'Test User', role: 'Operator', initials: 'TU' });
+  assert(state.usersData.length === initialUserCount + 1, "Appended a mock user profile successfully");
+  state.usersData.pop();
+
+  console.log(`%c--- TESTS COMPLETED: ${passed} Passed, ${failed} Failed ---`, 
+    failed > 0 ? "color: #ff3d00; font-weight: bold;" : "color: #00e676; font-weight: bold;"
+  );
+  return { passed, failed };
+}
+
+// 6. Khởi tạo ứng dụng khi trình duyệt tải xong DOM
+document.addEventListener('DOMContentLoaded', () => {
+  initNavigation();
+  initMachineSelection();
+  initSearchAndFilter();
+  initHistoryControls();
+  initReportControls();
+  initAlarms();
+  initAlarmControls();
+  initSettingsControls();
+  
+  // Thiết lập selectedMachineListId mặc định là '01'
+  state.selectedMachineListId = '01';
+  
+  // Thiết lập selectedMachineListId mặc định cho lịch sử
+  state.historyCurrentPage = 1;
+  state.alarmCurrentPage = 1;
+  
+  // Tự động render lần đầu cho Máy dập mặc định (Máy số 03)
+  updateActiveMachineDetails(state.selectedMachineId);
+  if (window.location.search.includes('runTests=true')) {
+    setTimeout(runSystemTests, 1000);
+  }
+  
+  console.log('App initialized successfully, mbro!');
+});
