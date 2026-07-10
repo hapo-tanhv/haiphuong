@@ -96,8 +96,8 @@ function renderSettingsView() {
   if (tableInfo) {
     if (lang === 'vi') {
       tableInfo.textContent = totalRecords > 0 
-        ? `Đang xem ${startIndex + 1} đến ${endIndex} trong ${totalRecords} tài khoản` 
-        : `Đang xem 0 đến 0 trong 0 tài khoản`;
+        ? `Hiển thị ${startIndex + 1} đến ${endIndex} trong ${totalRecords} tài khoản` 
+        : `Hiển thị 0 đến 0 trong 0 tài khoản`;
     } else {
       tableInfo.textContent = totalRecords > 0 
         ? `Showing ${startIndex + 1} to ${endIndex} of ${totalRecords} accounts` 
