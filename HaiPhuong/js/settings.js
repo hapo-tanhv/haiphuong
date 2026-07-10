@@ -69,21 +69,20 @@ function renderSettingsView() {
       const badgeClass = acc.role === 'ADMIN' ? 'badge-success' : 'badge-info';
       
       tr.innerHTML = `
-        <td style="text-align: center;">${globalIdx}</td>
-        <td style="text-align: left; font-weight: 600; color: #fff;">${acc.username}</td>
-        <td style="text-align: center;">
+        <td style="text-align: center; vertical-align: middle;">${globalIdx}</td>
+        <td style="text-align: left; font-weight: 600; color: #fff; vertical-align: middle;">${acc.username}</td>
+        <td style="text-align: center; vertical-align: middle;">
           <span class="badge ${badgeClass}" style="font-size: 0.7rem; padding: 4px 10px; border-radius: 12px; font-weight: 700;">${acc.role}</span>
         </td>
-        <td style="text-align: center;">
-          <div style="display: inline-flex; align-items: center; gap: 10px;">
-            <div class="custom-select-wrapper" style="width: 110px; text-align: left;">
-              <select class="settings-role-select" data-username="${acc.username}" style="padding: 4px 8px; font-size: 0.8rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; cursor: pointer; outline: none; width: 100%;">
-                <option value="ADMIN" ${acc.role === 'ADMIN' ? 'selected' : ''}>Admin</option>
-                <option value="OPERATOR" ${acc.role === 'OPERATOR' ? 'selected' : ''}>Operator</option>
-              </select>
-            </div>
-            <button class="btn-change-pwd" data-username="${acc.username}" style="background: rgba(255, 167, 38, 0.1); border: 1px solid rgba(255, 167, 38, 0.3); color: #ffa726; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;">
-              <span>🔑</span> <span data-i18n="settings_btn_change_pwd">${lang === 'vi' ? 'Đổi mật khẩu' : 'Change password'}</span>
+        <td style="text-align: center; vertical-align: middle;">
+          <div style="display: inline-flex; align-items: center; gap: 12px; justify-content: center; width: 100%;">
+            <select class="settings-role-select" data-username="${acc.username}">
+              <option value="ADMIN" ${acc.role === 'ADMIN' ? 'selected' : ''}>Admin</option>
+              <option value="OPERATOR" ${acc.role === 'OPERATOR' ? 'selected' : ''}>Operator</option>
+            </select>
+            <button class="btn-change-pwd" data-username="${acc.username}">
+              <span style="font-size: 0.9rem; line-height: 1;">🔑</span>
+              <span data-i18n="settings_btn_change_pwd">${lang === 'vi' ? 'Đổi mật khẩu' : 'Change password'}</span>
             </button>
           </div>
         </td>

@@ -946,3 +946,104 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Styling for account settings table elements */
+.settings-role-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #0b1426 !important;
+  border: 1px solid #1a2a4e !important;
+  color: #fff !important;
+  padding: 6px 28px 6px 12px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  outline: none;
+  width: 130px !important;
+  height: 32px !important;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23ffffff"><path d="M7 10l5 5 5-5H7z"/></svg>') !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 14px !important;
+  transition: all 0.2s ease;
+}
+.settings-role-select:focus {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
+}
+
+.btn-change-pwd {
+  background: rgba(210, 144, 34, 0.06) !important;
+  border: 1px solid rgba(210, 144, 34, 0.35) !important;
+  color: #ffa726 !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+.btn-change-pwd:hover {
+  background: rgba(210, 144, 34, 0.15) !important;
+  border-color: rgba(210, 144, 34, 0.6) !important;
+  box-shadow: 0 0 10px rgba(210, 144, 34, 0.1);
+}
+
+#settings-page-size {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #0b1426 !important;
+  border: 1px solid #1a2a4e !important;
+  color: #fff !important;
+  padding: 6px 30px 6px 12px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  outline: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23ffffff"><path d="M7 10l5 5 5-5H7z"/></svg>') !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 14px !important;
+  transition: all 0.2s ease;
+}
+#settings-page-size:focus {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
+}
+
+#settings-search-input {
+  background-color: #0b1426 !important;
+  border: 1px solid #1a2a4e !important;
+  color: #fff !important;
+  padding: 6px 12px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  outline: none;
+  width: 200px !important;
+  transition: all 0.2s ease;
+}
+#settings-search-input:focus {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
+}
+
+/* Badges for roles in Settings view */
+.badge-success {
+  background-color: rgba(0, 230, 118, 0.1) !important;
+  color: #00e676 !important;
+  border: 1px solid rgba(0, 230, 118, 0.2) !important;
+}
+.badge-info {
+  background-color: rgba(0, 210, 255, 0.1) !important;
+  color: #00d2ff !important;
+  border: 1px solid rgba(0, 210, 255, 0.2) !important;
+}

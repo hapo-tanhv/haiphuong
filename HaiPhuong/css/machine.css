@@ -665,9 +665,15 @@
   transform: none !important;
 }
 
-.machine-stamp-image.img-pressed {
+.machine-stamp-image.img-mid {
   opacity: 0;
   z-index: 2;
+  transform: translateX(4px) scaleX(0.985) !important;
+}
+
+.machine-stamp-image.img-pressed {
+  opacity: 0;
+  z-index: 3;
   transform: translateX(8px) scaleX(0.97) !important; /* Scale horizontally only, keep vertical scale at 1.0 */
 }
 
@@ -681,6 +687,10 @@
   animation: stamping-open-image 1.6s infinite ease-in-out !important;
 }
 
+.machine-stamp-card.running-animation .machine-stamp-image.img-mid {
+  animation: stamping-mid-image 1.6s infinite ease-in-out !important;
+}
+
 .machine-stamp-card.running-animation .machine-stamp-image.img-pressed {
   animation: stamping-pressed-image 1.6s infinite ease-in-out !important;
 }
@@ -690,19 +700,27 @@
 }
 
 @keyframes stamping-open-image {
-  0%, 35% { opacity: 1; }
-  45%, 55% { opacity: 0; }
-  65%, 100% { opacity: 1; }
+  0%, 20% { opacity: 1; }
+  30%, 70% { opacity: 0; }
+  80%, 100% { opacity: 1; }
+}
+
+@keyframes stamping-mid-image {
+  0%, 20% { opacity: 0; }
+  25%, 45% { opacity: 1; }
+  50%, 55% { opacity: 0; }
+  60%, 75% { opacity: 1; }
+  80%, 100% { opacity: 0; }
 }
 
 @keyframes stamping-pressed-image {
-  0%, 35% { opacity: 0; }
-  45%, 55% { opacity: 1; }
-  65%, 100% { opacity: 0; }
+  0%, 45% { opacity: 0; }
+  50%, 55% { opacity: 1; }
+  60%, 100% { opacity: 0; }
 }
 
 @keyframes stamp-glow-flash {
-  0%, 35% { opacity: 0; }
-  45%, 55% { opacity: 0.45; }
-  65%, 100% { opacity: 0; }
+  0%, 45% { opacity: 0; }
+  50%, 55% { opacity: 0.45; }
+  60%, 100% { opacity: 0; }
 }

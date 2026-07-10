@@ -101,6 +101,13 @@ let dateRangeFlatpickrInstance = null;
 let monthStartFlatpickrInstance = null;
 let monthEndFlatpickrInstance = null;
 
+const getMonthRangeDates = () => {
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const formatYMD = d => d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0');
+  return [formatYMD(firstDayOfMonth), formatYMD(today)];
+};
+
 function getSeedFromDate(dateStr) {
   if (!dateStr) return 0;
   let seed = 0;
@@ -201,8 +208,9 @@ function updateTrendAndAlarms(id) {
   let data = [];
   
   if (mode === 'day') {
-    let startDateVal = '2024-05-15';
-    let endDateVal = '2024-05-22';
+    const [defStart, defEnd] = getMonthRangeDates();
+    let startDateVal = defStart;
+    let endDateVal = defEnd;
     
     if (dateRangeFlatpickrInstance && dateRangeFlatpickrInstance.selectedDates.length === 2) {
       const d1 = dateRangeFlatpickrInstance.selectedDates[0];
@@ -436,8 +444,9 @@ function handleExcelExport(id) {
       start = formatYMD(dateRangeFlatpickrInstance.selectedDates[0]);
       end = formatYMD(dateRangeFlatpickrInstance.selectedDates[1]);
     } else {
-      start = '2024-05-15';
-      end = '2024-05-22';
+      const [defStart, defEnd] = getMonthRangeDates();
+      start = defStart;
+      end = defEnd;
     }
   } else {
     start = document.getElementById('part2-month-start') ? document.getElementById('part2-month-start').value : '';
@@ -591,7 +600,7 @@ function showMachineDetail(id) {
     dateRangeFlatpickrInstance = flatpickr(dateRangeInput, {
       mode: "range",
       dateFormat: "Y-m-d",
-      defaultDate: ["2026-06-25", "2026-07-09"],
+      defaultDate: getMonthRangeDates(),
       altInput: true,
       altFormat: "d/m/Y",
       onChange: function(selectedDates) {
