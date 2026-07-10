@@ -219,7 +219,6 @@
 }
 
 .time-widget .time-value {
-  font-family: monospace;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--accent-blue);
