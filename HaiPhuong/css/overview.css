@@ -389,6 +389,51 @@
   box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
 }
 
+.machine-grid-card.completed-warning {
+  border: 1px solid #00e676 !important;
+  box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+}
+
+.machine-grid-card.overtime-warning {
+  border: 1px solid #ff1744 !important;
+  box-shadow: 0 0 15px rgba(255, 23, 68, 0.25);
+  animation: card-alert-pulse 2s infinite ease-in-out;
+}
+
+@keyframes card-alert-pulse {
+  0% { box-shadow: 0 0 5px rgba(255, 23, 68, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(255, 23, 68, 0.5); }
+  100% { box-shadow: 0 0 5px rgba(255, 23, 68, 0.2); }
+}
+
+.completed-badge-flash {
+  background-color: #00e676;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.overtime-badge-flash {
+  background-color: #ff1744;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+  animation: text-alert-flash 1s infinite alternate;
+}
+
+@keyframes text-alert-flash {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
 .machine-card-thumb-wrapper {
   width: 35%;
   height: 150px;

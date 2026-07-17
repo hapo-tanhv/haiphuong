@@ -122,17 +122,19 @@ function updateDailyStats(id, dateStr) {
   if (!m) return;
   
   const seed = getSeedFromDate(dateStr);
-  const strokesNum = parseInt(m.strokes.replace('.', ''), 10);
+  const strokesNum = parseInt(m.strokes.replace(/[\.,]/g, ''), 10);
+  const orderActualNum = parseInt((m.orderActual || '0').replace(/[\.,]/g, ''), 10);
   
   // Pseudo-random deterministic variations based on date selected
   const multiplier = 0.85 + (seed % 31) / 200; // 0.85 to 1.0
   const dynamicStrokes = Math.floor(strokesNum * multiplier);
+  const dynamicOrderActual = Math.floor(orderActualNum * multiplier);
   
-  const dailyTargetNum = parseInt(m.dailyTarget.replace('.', ''), 10);
-  const totalOrderNum = parseInt(m.totalOrder.replace('.', ''), 10);
+  const dailyTargetNum = parseInt(m.dailyTarget.replace(/[\.,]/g, ''), 10);
+  const totalOrderNum = parseInt(m.totalOrder.replace(/[\.,]/g, ''), 10);
   
   const effPct = ((dynamicStrokes / dailyTargetNum) * 100).toFixed(1) + '%';
-  const orderPct = ((dynamicStrokes / totalOrderNum) * 100).toFixed(1) + '%';
+  const orderPct = totalOrderNum > 0 ? ((dynamicOrderActual / totalOrderNum) * 100).toFixed(1) + '%' : '0%';
   
   const baseTimeEff = parseFloat(m.timeEfficiency) || 60;
   const timeEffPct = Math.min(100, (baseTimeEff * multiplier)).toFixed(1) + '%';
@@ -148,48 +150,76 @@ function updateDailyStats(id, dateStr) {
     return `${h}:${min}:${s}`;
   };
 
-  // 1. Sản lượng / Kế hoạch ngày
+  // 1. Sản lượng ngày
   const strokesTargetValEl = document.getElementById('machine-detail-strokes-target-val');
-  const strokesTargetPctEl = document.getElementById('machine-detail-strokes-target-pct');
   if (strokesTargetValEl) {
-    strokesTargetValEl.innerHTML = `${dynamicStrokes.toLocaleString('vi-VN')} <span class="val-white">/ ${m.dailyTarget}</span>`;
-  }
-  if (strokesTargetPctEl) {
-    strokesTargetPctEl.textContent = effPct;
+    strokesTargetValEl.innerHTML = `${dynamicStrokes.toLocaleString('en-US')}`;
   }
   
   // 2. Tiến độ đơn hàng
   const strokesOrderValEl = document.getElementById('machine-detail-strokes-order-val');
   const strokesOrderPctEl = document.getElementById('machine-detail-strokes-order-pct');
   if (strokesOrderValEl) {
-    strokesOrderValEl.innerHTML = `${dynamicStrokes.toLocaleString('vi-VN')} <span class="val-white">/ ${m.totalOrder}</span>`;
+    strokesOrderValEl.innerHTML = `<span style="color: #00d2ff;">${dynamicOrderActual.toLocaleString('en-US')}</span> <span class="val-white">/ ${m.totalOrder}</span>`;
   }
   if (strokesOrderPctEl) {
     strokesOrderPctEl.textContent = orderPct;
   }
   
-  // 3. Hiệu suất sản lượng (OEE)
-  const oeeValEl = document.getElementById('machine-detail-oee-val');
-  if (oeeValEl) {
-    oeeValEl.textContent = effPct;
-  }
-  
-  // 4. Hiệu suất thời gian
+  // 3. Thời gian máy chạy / Thời gian ca
+  const runShiftValEl = document.getElementById('machine-detail-run-shift-val');
   const timeEffValEl = document.getElementById('machine-detail-time-eff-val');
+  if (runShiftValEl) {
+    runShiftValEl.innerHTML = `<span style="color: #00d2ff;">${m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00'}</span> <span class="val-white">/ ${m.runtimeMax}</span>`;
+  }
   if (timeEffValEl) {
     timeEffValEl.textContent = timeEffPct;
   }
   
-  // 5. Thời gian chạy thử máy
-  const trialValEl = document.getElementById('machine-detail-trial-val');
-  if (trialValEl) {
-    trialValEl.textContent = m.status === 'running' ? formatSecs(trialSecs) : '00:00:00';
+  // 4. Thời gian chạy thử / Thời gian máy chạy
+  const trialRunValEl = document.getElementById('machine-detail-trial-run-val');
+  const trialPctEl = document.getElementById('machine-detail-trial-pct');
+  const trialRatio = runtimeSecs > 0 ? ((trialSecs / runtimeSecs) * 100).toFixed(1) : '0.0';
+  if (trialRunValEl) {
+    trialRunValEl.innerHTML = `<span style="color: #00d2ff;">${m.status === 'running' ? formatSecs(trialSecs) : '00:00:00'}</span> <span class="val-white">/ ${m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00'}</span>`;
+  }
+  if (trialPctEl) {
+    trialPctEl.textContent = `${trialRatio}%`;
   }
 
-  // 6. Thời gian chạy máy
-  const runValEl = document.getElementById('machine-detail-run-val');
-  if (runValEl) {
-    runValEl.textContent = m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00';
+  // 5. Thời gian sản xuất / Thời gian máy chạy
+  const prodRunValEl = document.getElementById('machine-detail-prod-run-val');
+  const prodPctEl = document.getElementById('machine-detail-prod-pct');
+  const prodSecs = Math.max(0, runtimeSecs - trialSecs);
+  const prodRatio = runtimeSecs > 0 ? ((prodSecs / runtimeSecs) * 100).toFixed(1) : '0.0';
+  if (prodRunValEl) {
+    prodRunValEl.innerHTML = `<span style="color: #00d2ff;">${m.status === 'running' ? formatSecs(prodSecs) : '00:00:00'}</span> <span class="val-white">/ ${m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00'}</span>`;
+  }
+  if (prodPctEl) {
+    prodPctEl.textContent = `${prodRatio}%`;
+  }
+
+  // 6. Thời gian còn lại ước tính
+  const estValEl = document.getElementById('machine-detail-est-val');
+  if (estValEl) {
+    let estTimeStr = (state.language || 'vi') === 'vi' ? 'Không xác định' : 'N/A';
+    if (m.status === 'running') {
+      const speedAttr = m.type === 'screw' || m.type === 'heading' || m.type === 'threading'
+        ? (m.attributes && m.attributes.toc_do_may) 
+        : (m.attributes && m.attributes.toc_do_dap);
+      const speedMatch = (speedAttr || '').match(/\d+/);
+      const speed = speedMatch ? parseInt(speedMatch[0], 10) : (m.type !== 'stamping' ? 180 : 55);
+      
+      const targetVal = parseFloat((m.dailyTarget || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
+      const strokesVal = parseFloat((m.strokes || '0').replace(/\./g, '').replace(/,/g, '')) || 0;
+      const remaining = Math.max(0, targetVal - strokesVal);
+      
+      if (speed > 0) {
+        const remainingSeconds = Math.round((remaining / speed) * 60);
+        estTimeStr = formatSecs(remainingSeconds);
+      }
+    }
+    estValEl.textContent = estTimeStr;
   }
 }
 
@@ -242,7 +272,7 @@ function updateTrendAndAlarms(id) {
     
     const seed = getSeedFromDate(startDateVal + endDateVal);
     data = labels.map((l, idx) => {
-      const baseStrokes = parseInt(m.strokes.replace('.', ''), 10);
+      const baseStrokes = parseInt(m.strokes.replace(/[\.,]/g, ''), 10);
       return Math.floor(baseStrokes * (0.8 + ((seed + idx) % 30) / 100));
     });
   } else {
@@ -277,9 +307,15 @@ function updateTrendAndAlarms(id) {
     
     const seed = getSeedFromDate(startMonthVal + endMonthVal);
     data = labels.map((l, idx) => {
-      const baseStrokes = parseInt(m.strokes.replace('.', ''), 10);
+      const baseStrokes = parseInt(m.strokes.replace(/[\.,]/g, ''), 10);
       return Math.floor(baseStrokes * 22 + ((seed + idx) % 50) * 1000);
     });
+  }
+
+  // Cập nhật tên biểu đồ xu hướng sản lượng của máy
+  const trendChartTitle = document.getElementById('trend-chart-title-custom');
+  if (trendChartTitle) {
+    trendChartTitle.textContent = lang === 'vi' ? 'XU HƯỚNG SẢN LƯỢNG CỦA MÁY' : 'SCREW PERFORMANCE TREND';
   }
 
   // Draw Line Chart
@@ -299,7 +335,9 @@ function updateTrendAndAlarms(id) {
       data: {
         labels: labels,
         datasets: [{
-          label: lang === 'vi' ? 'Sản lượng dập (lần)' : 'Strokes',
+          label: (m.type === 'screw')
+            ? (lang === 'vi' ? 'Sản lượng xoắn (vòng)' : 'Rotations')
+            : (lang === 'vi' ? 'Sản lượng dập (lần)' : 'Strokes'),
           data: data,
           borderColor: chartColor,
           backgroundColor: chartBgColor,
@@ -354,13 +392,22 @@ function renderMachineAlarmsFiltered(machineId, mode) {
 
   // Filter alarms matching this machine ID
   const relatedAlarms = alarmsData.filter(a => {
-    const machineField = a.machine.toUpperCase();
-    const idNum = parseInt(machineId, 10);
-    const machineMatches = machineField.includes(machineId) || 
-                           machineField.includes(`#${machineId}`) || 
-                           machineField.includes(`#0${idNum}`) || 
-                           machineField.includes(`#${idNum}`);
-    if (!machineMatches) return false;
+    if (a.machineId) {
+      if (a.machineId.toUpperCase() === machineId.toUpperCase()) {
+        // Matched
+      } else {
+        return false;
+      }
+    } else if (a.machine) {
+      const machineField = a.machine.toUpperCase();
+      const idNum = parseInt(machineId, 10);
+      const machineMatches = machineField.includes(machineId.toUpperCase()) || 
+                             machineField.includes(`#${machineId.toUpperCase()}`) || 
+                             (!isNaN(idNum) && (machineField.includes(`#0${idNum}`) || machineField.includes(`#${idNum}`)));
+      if (!machineMatches) return false;
+    } else {
+      return false;
+    }
 
     // Filter by dates
     const alarmDateObj = parseAlarmDate(a.date);
@@ -492,7 +539,20 @@ function handleExcelExport(id) {
   document.body.removeChild(link);
 }
 
-function showMachineDetail(id) {
+async function fetchMachineAttributes(code) {
+  try {
+    const res = await fetch(`${window.basePath || ''}Api/GetMachineAttributes?code=${code}`);
+    const json = await res.json();
+    if (json.success) {
+      return json;
+    }
+  } catch (err) {
+    console.warn("Failed to fetch machine attributes from server, using fallback.", err);
+  }
+  return null;
+}
+
+async function showMachineDetail(id) {
   const m = machinesData[id];
   if (!m) return;
 
@@ -509,35 +569,192 @@ function showMachineDetail(id) {
   // 2. Update Header Title to Machine Detail
   updateHeaderTitle('machine-detail');
 
+  // Load live attributes from database API
+  const dbData = await fetchMachineAttributes(id);
+  const isMonitored = dbData ? dbData.isMonitored : (m.isMonitored !== false);
+
   // 3. Populate machine specs details
   const titleEl = document.getElementById('machine-detail-title');
   if (titleEl) {
-    titleEl.textContent = lang === 'vi' ? `MÁY DẬP SỐ #${id}` : `STAMPING PRESS #${id}`;
+    const typeLabel = m.type === 'screw' ? (lang === 'vi' ? 'MÁY VÍT' : 'SCREW MACHINE') : (lang === 'vi' ? 'MÁY DẬP' : 'STAMPING PRESS');
+    titleEl.textContent = `${typeLabel} SỐ #${id}`;
   }
 
-  const dotEl = document.getElementById('machine-detail-status-dot');
-  const textEl = document.getElementById('machine-detail-status-text');
-  const isRunning = m.status === 'running';
-  if (dotEl && textEl) {
-    dotEl.className = 'status-indicator-dot';
-    dotEl.classList.add(isRunning ? 'running' : 'stopped');
-    textEl.className = 'status-text';
-    textEl.classList.add(isRunning ? 'text-running' : 'text-stopped');
-    textEl.textContent = lang === 'vi' 
-      ? (isRunning ? 'ĐANG HOẠT ĐỘNG' : 'MÁY DỪNG') 
-      : (isRunning ? 'RUNNING' : 'STOPPED');
-  }
+  // Toggle monitored section elements
+  const rightCol = document.querySelector('.detail-right-col');
+  const orderWrapper = document.querySelector('.order-selector-wrapper');
+  
+  // Clean up any dynamic config-only banner
+  const existingBanner = document.getElementById('machine-detail-config-only-banner');
+  if (existingBanner) existingBanner.remove();
 
-  // Stamp card animation
-  const stampCard = document.getElementById('machine-stamp-card');
-  if (stampCard) {
-    if (isRunning) {
-      stampCard.classList.add('running-animation');
-    } else {
-      stampCard.classList.remove('running-animation');
+  if (!isMonitored) {
+    // Hide order selector and daily stats cards
+    if (rightCol) rightCol.style.display = 'none';
+    if (orderWrapper) orderWrapper.style.display = 'none';
+
+    // Show a beautiful info banner
+    const banner = document.createElement('div');
+    banner.id = 'machine-detail-config-only-banner';
+    banner.className = 'detail-product-panel';
+    banner.style.padding = '30px';
+    banner.style.textAlign = 'center';
+    banner.style.background = 'rgba(255, 255, 255, 0.02)';
+    banner.style.border = '1px dashed var(--border-color)';
+    banner.style.borderRadius = '12px';
+    banner.style.marginTop = '20px';
+    banner.innerHTML = `
+      <svg style="width: 48px; height: 48px; color: var(--text-secondary); margin-bottom: 15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <h3 style="color: var(--text-primary); margin-bottom: 8px;">CHỈ LƯU CẤU HÌNH</h3>
+      <p style="color: var(--text-secondary); font-size: 0.85rem; max-width: 400px; margin: 0 auto;">Thiết bị này chỉ lưu trữ cấu hình thuộc tính kỹ thuật văn bản. Không được kết nối Gateway PLC để đo lường sản lượng và OEE thực tế.</p>
+    `;
+    const layoutContainer = document.querySelector('.machine-detail-layout');
+    if (layoutContainer) {
+      layoutContainer.appendChild(banner);
+    }
+
+    // Set status to Config Only
+    const dotEl = document.getElementById('machine-detail-status-dot');
+    const textEl = document.getElementById('machine-detail-status-text');
+    if (dotEl && textEl) {
+      dotEl.className = 'status-indicator-dot stopped';
+      textEl.className = 'status-text text-stopped';
+      textEl.textContent = lang === 'vi' ? 'CHỈ LƯU CẤU HÌNH' : 'CONFIG ONLY';
+    }
+
+    const stampCard = document.getElementById('machine-stamp-card');
+    if (stampCard) stampCard.classList.remove('running-animation');
+  } else {
+    // Show order selector and stats cards
+    if (rightCol) rightCol.style.display = 'block';
+    if (orderWrapper) orderWrapper.style.display = 'flex';
+
+    const dotEl = document.getElementById('machine-detail-status-dot');
+    const textEl = document.getElementById('machine-detail-status-text');
+    const isRunning = m.status === 'running';
+    if (dotEl && textEl) {
+      dotEl.className = 'status-indicator-dot';
+      dotEl.classList.add(isRunning ? 'running' : 'stopped');
+      textEl.className = 'status-text';
+      textEl.classList.add(isRunning ? 'text-running' : 'text-stopped');
+      textEl.textContent = lang === 'vi' 
+        ? (isRunning ? 'ĐANG HOẠT ĐỘNG' : 'MÁY DỪNG') 
+        : (isRunning ? 'RUNNING' : 'STOPPED');
+    }
+
+    const stampCard = document.getElementById('machine-stamp-card');
+    if (stampCard) {
+      if (isRunning) {
+        stampCard.classList.add('running-animation');
+      } else {
+        stampCard.classList.remove('running-animation');
+      }
     }
   }
 
+  // Render thông số kỹ thuật của thiết bị dập/vít
+  const tbody = document.getElementById('machine-detail-attributes-tbody');
+  if (tbody) {
+    tbody.innerHTML = '';
+    
+    if (dbData && dbData.metadata && dbData.values) {
+      // Dữ liệu thuộc tính động từ Database
+      dbData.metadata.forEach(attr => {
+        const val = dbData.values[attr.key] || '-';
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+        row.innerHTML = `
+          <td style="padding: 8px 0; color: var(--text-secondary); width: 50%; font-weight: 500;">${attr.displayName}:</td>
+          <td style="padding: 8px 0; font-weight: 600; text-align: right; color: var(--text-primary);">${val} ${attr.unit || ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    } else {
+      // Dữ liệu tĩnh dự phòng (fallback)
+      const attrs = m.attributes || {};
+      const attrLabels = {
+        code: lang === 'vi' ? 'Mã máy' : 'Machine Code',
+        name: lang === 'vi' ? 'Tên máy' : 'Machine Name',
+        brand: lang === 'vi' ? 'Hãng sản xuất' : 'Manufacturer',
+        model: lang === 'vi' ? 'Model' : 'Model',
+        force: m.type === 'screw' 
+          ? (lang === 'vi' ? 'Lực ép/xoắn' : 'Torque Force')
+          : (lang === 'vi' ? 'Lực dập' : 'Tonnage'),
+        type: lang === 'vi' ? 'Loại máy' : 'Machine Type',
+        stroke: lang === 'vi' ? 'Hành trình đầu trượt' : 'Stroke',
+        dieHeight: lang === 'vi' ? 'DIE HEIGHT' : 'Die Height',
+        speed: m.type === 'screw'
+          ? (lang === 'vi' ? 'Tốc độ xoắn' : 'Rotation Speed')
+          : (lang === 'vi' ? 'Tốc độ dập' : 'Speed (SPM)'),
+        slideAdj: lang === 'vi' ? 'Điều chỉnh đầu trượt' : 'Slide Adjustment',
+        slideSize: lang === 'vi' ? 'Kích thước đầu trượt' : 'Slide Size',
+        bolsterSize: lang === 'vi' ? 'Kích thước bàn máy' : 'Bolster Size',
+        bolsterThickness: lang === 'vi' ? 'Chiều dày bàn máy' : 'Bolster Thickness',
+        throatDepth: lang === 'vi' ? 'Khoảng hở họng máy' : 'Throat Depth'
+      };
+
+      Object.keys(attrLabels).forEach(key => {
+        const val = attrs[key] || '-';
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+        row.innerHTML = `
+          <td style="padding: 8px 0; color: var(--text-secondary); width: 50%; font-weight: 500;">${attrLabels[key]}:</td>
+          <td style="padding: 8px 0; font-weight: 600; text-align: right; color: var(--text-primary);">${val}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  }
+
+  // Khởi tạo và liên kết danh sách dropdown Lệnh sản xuất lịch sử
+  const orderSelect = document.getElementById('detail-order-select');
+  if (orderSelect) {
+    orderSelect.innerHTML = '';
+    if (m.ordersHistory && m.ordersHistory.length > 0) {
+      m.ordersHistory.forEach(ord => {
+        const opt = document.createElement('option');
+        opt.value = ord;
+        opt.textContent = ord;
+        if (ord === m.activeOrderId) {
+          opt.selected = true;
+        }
+        orderSelect.appendChild(opt);
+      });
+    }
+
+    orderSelect.onchange = function() {
+      const selectedOrd = orderSelect.value;
+      m.activeOrderId = selectedOrd;
+
+      // Tìm thông tin lệnh từ productionOrders toàn hệ thống
+      const orderInfo = state.productionOrders.find(o => o.orderNo === selectedOrd);
+      if (orderInfo) {
+        m.productCode = orderInfo.productCode;
+        m.productName = orderInfo.productName;
+        m.order = orderInfo.orderNo;
+        m.plannedQty = orderInfo.plannedQty.toLocaleString('vi-VN');
+        m.totalOrder = orderInfo.plannedQty.toLocaleString('vi-VN');
+      }
+
+      // Nạp dữ liệu thống kê giả lập tương ứng với lệnh đó nếu có
+      if (window.orderMockStats && window.orderMockStats[selectedOrd]) {
+        const stats = window.orderMockStats[selectedOrd];
+        m.strokes = stats.strokes;
+        m.efficiency = stats.efficiency;
+        m.timeEfficiency = stats.timeEfficiency;
+        m.runtime = stats.runtime;
+        m.stoptime = stats.stoptime;
+        m.trialTime = stats.trialTime;
+        m.trend = stats.trend;
+      }
+
+      showMachineDetail(id);
+    };
+  }
 
   // 4. Populate Product Info
   const prodCode = document.getElementById('product-detail-code');
@@ -546,8 +763,8 @@ function showMachineDetail(id) {
   const prodPlan = document.getElementById('product-detail-plan');
   if (prodCode) prodCode.textContent = m.productCode || '-';
   if (prodName) prodName.textContent = m.productName || '-';
-  if (prodBatch) prodBatch.textContent = m.batch || '-';
-  if (prodPlan) prodPlan.innerHTML = `${m.plannedQty} <span class="unit">${lang === 'vi' ? 'lần' : 'times'}</span>`;
+  if (prodBatch) prodBatch.textContent = m.order || '-'; // Lệnh sản xuất hiển thị ở đây
+  if (prodPlan) prodPlan.innerHTML = `${m.plannedQty} <span class="unit">${lang === 'vi' ? 'PCS' : 'PCS'}</span>`;
 
   // 5. Destroy old Flatpickr instances if they exist to prevent memory leaks
   if (singleDateFlatpickrInstance) { singleDateFlatpickrInstance.destroy(); }
@@ -676,16 +893,28 @@ function initBackButton() {
       if (detailSection) detailSection.classList.add('hidden');
       if (overviewSection) overviewSection.classList.remove('hidden');
       
-      // Cập nhật lại trạng thái active trên Sidebar sang Tổng quan
+      // Cập nhật lại trạng thái active trên Sidebar sang Máy dập / Máy vít tương ứng
       const navItems = document.querySelectorAll('.nav-item');
       navItems.forEach(nav => nav.classList.remove('active'));
-      const overviewTab = document.querySelector('.nav-item[data-tab="overview"]');
+      let activeTabId = 'overview';
+      if (state.overviewType === 'screw') {
+        activeTabId = 'overview-screw';
+      } else if (state.overviewType === 'heading') {
+        activeTabId = 'overview-heading';
+      } else if (state.overviewType === 'threading') {
+        activeTabId = 'overview-threading';
+      }
+      const overviewTab = document.querySelector(`.nav-item[data-tab="${activeTabId}"]`);
       if (overviewTab) {
         overviewTab.classList.add('active');
+        if (activeTabId === 'overview-heading' || activeTabId === 'overview-threading') {
+          const parent = overviewTab.closest('.nav-item-parent');
+          if (parent) parent.classList.add('expanded');
+        }
       }
 
-      state.currentTab = 'overview';
-      updateHeaderTitle('overview');
+      state.currentTab = activeTabId;
+      updateHeaderTitle(activeTabId);
     });
   }
 }
@@ -731,5 +960,21 @@ const historyData = [
   { machineId: '02', start: '29/06/2026 08:30', end: '29/06/2026 17:30', strokes: '985',  quality: 97, status: 'running' },
   { machineId: '06', start: '29/06/2026 07:00', end: '29/06/2026 11:30', strokes: '570',  quality: 74, status: 'stopped' },
   { machineId: '09', start: '29/06/2026 07:45', end: '29/06/2026 16:00', strokes: '1.390', quality: 96, status: 'running' },
-  { machineId: '04', start: '29/06/2026 08:00', end: '29/06/2026 17:00', strokes: '880',  quality: 95, status: 'running' }
+  { machineId: '04', start: '29/06/2026 08:00', end: '29/06/2026 17:00', strokes: '880',  quality: 95, status: 'running' },
+  
+  // Dữ liệu mô phỏng máy vít (11 - 20)
+  { machineId: '11', start: '09/07/2026 07:30', end: '09/07/2026 16:45', strokes: '2.500', quality: 98, status: 'running' },
+  { machineId: '12', start: '09/07/2026 08:30', end: '09/07/2026 17:30', strokes: '1.800', quality: 97, status: 'running' },
+  { machineId: '13', start: '09/07/2026 07:00', end: '09/07/2026 11:30', strokes: '1.200', quality: 75, status: 'stopped' },
+  { machineId: '14', start: '09/07/2026 07:45', end: '09/07/2026 16:00', strokes: '2.100', quality: 95, status: 'running' },
+  { machineId: '16', start: '09/07/2026 08:15', end: '09/07/2026 17:00', strokes: '980',  quality: 99, status: 'stopped' },
+  
+  { machineId: '11', start: '08/07/2026 08:00', end: '08/07/2026 17:00', strokes: '2.400', quality: 96, status: 'running' },
+  { machineId: '15', start: '08/07/2026 08:15', end: '08/07/2026 17:30', strokes: '2.200', quality: 97, status: 'running' },
+  { machineId: '18', start: '08/07/2026 08:30', end: '08/07/2026 16:45', strokes: '1.200', quality: 94, status: 'running' },
+  { machineId: '20', start: '08/07/2026 09:00', end: '08/07/2026 13:00', strokes: '500',  quality: 80, status: 'stopped' },
+  
+  { machineId: '12', start: '07/07/2026 08:30', end: '07/07/2026 17:30', strokes: '1.750', quality: 97, status: 'running' },
+  { machineId: '13', start: '07/07/2026 07:00', end: '07/07/2026 11:30', strokes: '2.800', quality: 76, status: 'running' },
+  { machineId: '19', start: '07/07/2026 07:45', end: '07/07/2026 16:00', strokes: '2.300', quality: 95, status: 'running' }
 ];

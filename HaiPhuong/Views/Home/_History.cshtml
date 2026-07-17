@@ -1,50 +1,83 @@
-        <section id="view-history" class="view-section hidden">
+<section id="view-history" class="view-section hidden">
           <div class="history-layout">
             <!-- Row 1: 4 KPI Cards -->
-            <div class="history-kpi-row">
+             <div class="history-kpi-row">
               <!-- KPI Card 1 -->
               <div class="h-kpi-card accent-blue">
-                <span class="h-kpi-label" data-i18n="history_kpi_total_strokes">TỔNG SẢN LƯỢNG NGÀY</span>
-                <span class="h-kpi-value">12.568 <span class="unit" data-i18n="overview_strokes_unit">Lần</span></span>
-                <div class="h-kpi-trend trend-up">
+                <span class="h-kpi-label" data-i18n="history_kpi_day_efficiency">THỜI GIAN SẢN XUẤT TRONG NGÀY</span>
+                <span class="h-kpi-value" id="history-kpi-day-val">06:50:00</span>
+                <div class="h-kpi-trend trend-up" id="history-kpi-day-trend">
                   <svg class="trend-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="7" y1="17" x2="17" y2="7"></line>
                     <polyline points="7 7 17 7 17 17"></polyline>
                   </svg>
-                  <span>+8.5% <span data-i18n="history_kpi_total_strokes_sub">so với hôm qua</span></span>
+                  <span>+2.1% <span data-i18n="history_kpi_total_strokes_sub">so với hôm qua</span></span>
                 </div>
               </div>
 
               <!-- KPI Card 2 -->
               <div class="h-kpi-card accent-grey">
-                <span class="h-kpi-label" data-i18n="history_kpi_uptime">TỔNG SẢN LƯỢNG TUẦN</span>
-                <span class="h-kpi-value">84.210 <span class="unit" data-i18n="overview_strokes_unit">Lần</span></span>
-                <div class="h-kpi-trend trend-up">
+                <span class="h-kpi-label" data-i18n="history_kpi_week_efficiency">THỜI GIAN SẢN XUẤT TRONG TUẦN</span>
+                <span class="h-kpi-value" id="history-kpi-week-val">48:20:00</span>
+                <div class="h-kpi-trend trend-up" id="history-kpi-week-trend">
                   <svg class="trend-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="7" y1="17" x2="17" y2="7"></line>
                     <polyline points="7 7 17 7 17 17"></polyline>
                   </svg>
-                  <span>+4.5% <span data-i18n="history_kpi_uptime_sub">so với tuần trước</span></span>
+                  <span>+1.5% <span data-i18n="history_kpi_uptime_sub">so với tuần trước</span></span>
                 </div>
               </div>
 
               <!-- KPI Card 3 -->
               <div class="h-kpi-card accent-blue">
-                <span class="h-kpi-label" data-i18n="history_kpi_monthly_strokes">TỔNG SẢN LƯỢNG THÁNG</span>
-                <span class="h-kpi-value">340.500 <span class="unit" data-i18n="overview_strokes_unit">Lần</span></span>
-                <div class="h-kpi-trend trend-up">
+                <span class="h-kpi-label" data-i18n="history_kpi_month_efficiency">THỜI GIAN SẢN XUẤT TRONG THÁNG</span>
+                <span class="h-kpi-value" id="history-kpi-month-val">192:40:00</span>
+                <div class="h-kpi-trend trend-up" id="history-kpi-month-trend">
                   <svg class="trend-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="7" y1="17" x2="17" y2="7"></line>
                     <polyline points="7 7 17 7 17 17"></polyline>
                   </svg>
-                  <span>+12.4% <span data-i18n="history_kpi_monthly_strokes_sub">so với tháng trước</span></span>
+                  <span>+0.8% <span data-i18n="history_kpi_monthly_strokes_sub">so với tháng trước</span></span>
                 </div>
               </div>
 
-              <!-- KPI Card 4 -->
-              <div class="h-kpi-card accent-green" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
-                <span class="h-kpi-label" data-i18n="history_kpi_downtime">HIỆU SUẤT</span>
-                <span class="h-kpi-value" style="margin-top: 8px;">98.4%</span>
+              <!-- KPI Card 4: Day Yield -->
+              <div class="h-kpi-card accent-green">
+                <span class="h-kpi-label" data-i18n="history_kpi_day_yield">SẢN LƯỢNG TRONG NGÀY</span>
+                <span class="h-kpi-value" id="history-kpi-day-yield">14.700</span>
+                <div class="h-kpi-trend trend-up" id="history-kpi-day-yield-trend">
+                  <svg class="trend-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                    <polyline points="7 7 17 7 17 17"></polyline>
+                  </svg>
+                  <span>+1.8% <span data-i18n="history_kpi_day_yield_sub">so với hôm qua</span></span>
+                </div>
+              </div>
+
+              <!-- KPI Card 5: Week Yield -->
+              <div class="h-kpi-card accent-green">
+                <span class="h-kpi-label" data-i18n="history_kpi_week_yield">SẢN LƯỢNG TRONG TUẦN</span>
+                <span class="h-kpi-value" id="history-kpi-week-yield">102.900</span>
+                <div class="h-kpi-trend trend-up" id="history-kpi-week-yield-trend">
+                  <svg class="trend-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                    <polyline points="7 7 17 7 17 17"></polyline>
+                  </svg>
+                  <span>+2.3% <span data-i18n="history_kpi_week_yield_sub">so với tuần trước</span></span>
+                </div>
+              </div>
+
+              <!-- KPI Card 6: Month Yield -->
+              <div class="h-kpi-card accent-green">
+                <span class="h-kpi-label" data-i18n="history_kpi_month_yield">SẢN LƯỢNG TRONG THÁNG</span>
+                <span class="h-kpi-value" id="history-kpi-month-yield">441.000</span>
+                <div class="h-kpi-trend trend-up" id="history-kpi-month-yield-trend">
+                  <svg class="trend-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                    <polyline points="7 7 17 7 17 17"></polyline>
+                  </svg>
+                  <span>+1.2% <span data-i18n="history_kpi_month_yield_sub">so với tháng trước</span></span>
+                </div>
               </div>
             </div>
 
@@ -69,6 +102,13 @@
                 <svg class="dropdown-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
+              </div>
+
+              <div class="main-filter-wrapper-custom" style="display: flex; align-items: center;">
+                <select id="history-main-type-filter" class="date-picker-input-custom" style="padding: 0 12px; height: 38px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); font-weight: 500; cursor: pointer; outline: none; transition: border-color 0.2s;">
+                  <option value="stamping" selected data-i18n="history_main_filter_stamping">Máy dập</option>
+                  <option value="screw" data-i18n="history_main_filter_screw">Máy vít</option>
+                </select>
               </div>
 
               <div class="filter-btn-wrapper" style="position: relative;">
@@ -117,6 +157,7 @@
                       <span data-i18n="history_filter_quality_low">Không đạt (< 100%)</span>
                     </label>
                   </div>
+
                   <div class="filter-actions">
                     <button class="filter-action-btn reset" id="filter-reset-btn" data-i18n="history_filter_btn_reset">Reset</button>
                     <button class="filter-action-btn apply" id="filter-apply-btn" data-i18n="history_filter_btn_apply">Lọc</button>
@@ -143,9 +184,6 @@
                     <th data-i18n="history_tbl_col_start">THỜI GIAN BẮT ĐẦU</th>
                     <th data-i18n="history_tbl_col_end">THỜI GIAN KẾT THÚC</th>
                     <th data-i18n="history_tbl_col_strokes" style="text-align: center;">SẢN LƯỢNG THỰC TẾ</th>
-                    <th data-i18n="history_tbl_col_target" style="text-align: center;">SẢN LƯỢNG TIÊU CHUẨN</th>
-                    <th data-i18n="history_tbl_col_efficiency">HIỆU SUẤT</th>
-                    <th data-i18n="history_tbl_col_status" style="text-align: center;">TRẠNG THÁI</th>
                     <th data-i18n="history_tbl_col_details" style="text-align: center;">CHI TIẾT</th>
                   </tr>
                 </thead>
@@ -161,6 +199,33 @@
               </div>
             </div>
 
+            <!-- Bảng Lệnh sản xuất đã lưu -->
+            <div class="table-container" style="margin-top: 30px;">
+              <div class="panel-header" style="margin-bottom: 15px;">
+                <h3 class="panel-title" style="font-size: 1rem; font-weight: 700; color: var(--accent-blue);" data-i18n="history_orders_title">QUẢN LÝ LỆNH SẢN XUẤT</h3>
+              </div>
+              <table class="history-table" id="orders-management-table">
+                <thead>
+                  <tr>
+                    <th>NGÀY TẠO</th>
+                    <th>SỐ LỆNH SX</th>
+                    <th>MÃ SẢN PHẨM</th>
+                    <th>TÊN SẢN PHẨM</th>
+                    <th>MÃ MÁY</th>
+                    <th>CÔNG ĐOẠN</th>
+                    <th style="text-align: center;">SỐ LƯỢNG (PCS)</th>
+                    <th style="text-align: center;">TRẠNG THÁI</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                  <!-- Render động qua JS -->
+                </tbody>
+              </table>
+              <div class="table-footer">
+                <span class="table-info" id="orders-table-info"></span>
+                <div class="pagination" id="orders-pagination"></div>
+              </div>
+            </div>
 
           </div>
         </section>

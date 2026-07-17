@@ -7,8 +7,8 @@
 
 .history-kpi-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   width: 100%;
 }
 
@@ -61,6 +61,16 @@
 
 .h-kpi-trend.trend-up {
   color: var(--status-running);
+}
+
+.h-kpi-trend.trend-down {
+  color: var(--status-stopped);
+}
+
+.trend-arrow-icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5px;
 }
 
 .h-kpi-trend.trend-stable {
@@ -238,6 +248,16 @@
 .badge-danger {
   background-color: rgba(255, 61, 0, 0.08);
   color: var(--status-stopped);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.badge-info {
+  background-color: rgba(0, 210, 255, 0.08);
+  color: var(--accent-cyan);
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.75rem;

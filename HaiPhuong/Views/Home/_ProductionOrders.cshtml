@@ -1,0 +1,135 @@
+<section id="view-production-orders" class="view-section hidden">
+  <div class="production-orders-container" style="padding: 24px; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-color); margin: 24px; margin-top: 0;">
+    
+    <!-- Title -->
+    <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+      <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: 0.5px;">QUẢN LÝ LỆNH SẢN XUẤT</h2>
+    </div>
+
+    <!-- Top Block: Setup Production Order Form -->
+    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 24px; display: flex; flex-direction: column;">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.05rem; color: var(--accent-blue);">THIẾT LẬP LỆNH SẢN XUẤT</h3>
+      
+      <div class="order-form" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 10px; width: 100%;">
+        <!-- Date -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Ngày tạo lệnh:</span>
+          <input type="text" id="order-input-date" class="date-picker-input-custom" placeholder="Chọn ngày tạo..." style="padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; width: 100%;">
+        </div>
+        
+        <!-- Order No -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Số Lệnh sản xuất:</span>
+          <input type="text" id="order-input-no" list="order-no-suggestions" placeholder="LSX-YYYYMMDD-NN..." style="padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; width: 100%;">
+          <datalist id="order-no-suggestions"></datalist>
+        </div>
+
+        <!-- Product Code -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Mã sản phẩm:</span>
+          <input type="text" id="order-input-prodcode" placeholder="Nhập mã sản phẩm..." style="padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; width: 100%;">
+        </div>
+
+        <!-- Product Name -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Tên sản phẩm:</span>
+          <input type="text" id="order-input-prodname" placeholder="Nhập tên sản phẩm..." style="padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; width: 100%;">
+        </div>
+
+        <!-- Assign Machine Dropdown -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Máy chỉ định:</span>
+          <input type="text" id="order-input-machine" list="machine-suggestions" placeholder="Nhập hoặc chọn máy..." style="padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; font-weight: bold; width: 100%;">
+          <datalist id="machine-suggestions"></datalist>
+        </div>
+
+        <!-- Stage -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Công đoạn sản xuất:</span>
+          <input type="text" id="order-input-stage" list="stage-suggestions" placeholder="Nhập hoặc chọn công đoạn..." style="padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; font-weight: bold; width: 100%;">
+          <datalist id="stage-suggestions">
+            <option value="Dập định hình"></option>
+            <option value="Đấm đầu vít"></option>
+            <option value="Cán ren vít"></option>
+          </datalist>
+        </div>
+
+        <!-- Target Qty -->
+        <div style="display: flex; flex-direction: column; gap: 4px; position: relative;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Số lượng kế hoạch (PCS):</span>
+          <input type="number" id="order-input-qty" placeholder="Nhập số lượng..." style="padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; width: 100%;">
+          <div id="inherited-order-hint" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: rgba(0, 230, 118, 0.15); border: 1px solid rgba(0, 230, 118, 0.3); border-radius: 6px; padding: 4px 8px; margin-top: 4px; font-size: 0.72rem; color: #00e676; z-index: 10; font-weight: 600; text-align: left;"></div>
+        </div>
+
+        <!-- Form Actions (Lưu, Xuất PDF) -->
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+          <button type="button" id="btn-save-production-order" style="flex: 1; padding: 10px; background: var(--accent-blue); border: none; border-radius: 8px; color: #fff; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; height: 38px; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">
+            LƯU LỆNH SX
+          </button>
+          <button type="button" id="btn-export-pdf-ticket" disabled style="flex: 1; padding: 10px; background: rgba(0, 230, 118, 0.1); border: 1px solid rgba(0, 230, 118, 0.3); border-radius: 8px; color: #00e676; font-weight: 700; cursor: not-allowed; transition: all 0.2s; font-size: 0.8rem; height: 38px; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap;">
+            XUẤT PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Block: Query / Search & List Production Orders -->
+    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; display: flex; flex-direction: column;">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.05rem; color: var(--accent-blue);">DANH SÁCH LỆNH SẢN XUẤT</h3>
+      
+      <!-- Filter Controls -->
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
+        <!-- Search box -->
+        <div class="search-box-wrapper" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="order-search-input" placeholder="Tìm theo tên lệnh, sản phẩm...">
+        </div>
+
+        <!-- Status filter select -->
+        <select id="order-status-filter" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; padding: 10px 16px; font-size: 0.9rem; outline: none; cursor: pointer; min-width: 150px; font-weight: 600;">
+          <option value="all">Tất cả trạng thái</option>
+          <option value="running">Đang thực thi</option>
+          <option value="pending">Đang chờ chạy</option>
+          <option value="completed">Hoàn thành</option>
+          <option value="stopped">Tạm dừng</option>
+          <option value="cancelled">Đã hủy</option>
+        </select>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="orders-table-wrapper" style="overflow-x: auto; flex: 1; min-height: 400px;">
+        <table class="history-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">
+              <th style="padding: 12px 8px; font-weight: 700;">Mã Lệnh</th>
+              <th style="padding: 12px 8px; font-weight: 700;">Sản phẩm</th>
+              <th style="padding: 12px 8px; font-weight: 700;">Công đoạn</th>
+              <th style="padding: 12px 8px; font-weight: 700;">Thiết bị</th>
+              <th style="padding: 12px 8px; font-weight: 700; text-align: right;">Kế hoạch</th>
+              <th style="padding: 12px 8px; font-weight: 700; text-align: right;">Thực tế</th>
+              <th style="padding: 12px 8px; font-weight: 700; text-align: center; width: 120px;">Tiến độ</th>
+              <th style="padding: 12px 8px; font-weight: 700; text-align: center;">Trạng thái</th>
+              <th style="padding: 12px 8px; font-weight: 700; text-align: center;">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="production-orders-table-body">
+            <!-- Dynamically populated via JS -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Footer Pagination -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;" id="production-orders-page-info">
+          Hiển thị 0 - 0 trong 0 lệnh
+        </div>
+        <div class="pagination" id="production-orders-pagination" style="display: flex; gap: 8px;">
+          <!-- JS dynamic pagination controls -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>

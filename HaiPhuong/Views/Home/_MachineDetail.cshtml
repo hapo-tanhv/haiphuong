@@ -10,11 +10,19 @@
                 <span data-i18n="btn_back_to_overview">Quay lại Tổng quan</span>
               </button>
               
-              <div class="detail-title-block">
-                <h2 class="detail-main-title" id="machine-detail-title">MÁY DẬP SỐ #01</h2>
-                <div class="machine-status-badge" style="margin-top: 4px;">
-                  <span class="status-indicator-dot running" id="machine-detail-status-dot"></span>
-                  <span class="status-text text-running" id="machine-detail-status-text">ĐANG HOẠT ĐỘNG</span>
+              <div class="detail-title-block" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 15px;">
+                <div>
+                  <h2 class="detail-main-title" id="machine-detail-title">MÁY DẬP SỐ #01</h2>
+                  <div class="machine-status-badge" style="margin-top: 4px;">
+                    <span class="status-indicator-dot running" id="machine-detail-status-dot"></span>
+                    <span class="status-text text-running" id="machine-detail-status-text">ĐANG HOẠT ĐỘNG</span>
+                  </div>
+                </div>
+                <div class="order-selector-wrapper" style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 10px;">
+                  <span style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="detail_select_order_label">Lệnh sản xuất:</span>
+                  <select id="detail-order-select" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); padding: 6px 12px; font-size: 0.85rem; cursor: pointer; outline: none; font-weight: 600; min-width: 160px;">
+                    <!-- Dynamically populated -->
+                  </select>
                 </div>
               </div>
             </div>
@@ -30,6 +38,17 @@
                     <!-- Glow indicator on impact -->
                     <div class="stamp-glow" id="machine-detail-stamp-glow"></div>
                   </div>
+                </div>
+                <!-- Bảng thông số kỹ thuật (14 thuộc tính) -->
+                <div class="detail-attributes-panel" style="margin-top: 24px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px; padding: 20px;">
+                  <div class="panel-header" style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                    <h3 class="panel-title" style="font-size: 0.9rem;" data-i18n="attributes_title">THÔNG SỐ KỸ THUẬT THIẾT BỊ</h3>
+                  </div>
+                  <table class="attributes-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; color: var(--text-primary);">
+                    <tbody id="machine-detail-attributes-tbody">
+                      <!-- Trình bày động qua JS -->
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -50,7 +69,7 @@
                       <span class="info-value-custom" id="product-detail-name">-</span>
                     </div>
                     <div class="product-info-item-custom">
-                      <span class="info-label-custom">Lô sản xuất:</span>
+                      <span class="info-label-custom">Lệnh sản xuất:</span>
                       <span class="info-value-custom" id="product-detail-batch">-</span>
                     </div>
                     <div class="product-info-item-custom">
@@ -73,41 +92,53 @@
                     </div>
                   </div>
                   <div class="detail-stats-grid">
-                    <!-- 1. Sản lượng / Kế hoạch ngày -->
+                    <!-- 1. Sản lượng ngày -->
                     <div class="detail-stat-card">
-                      <span class="stat-card-label">SẢN LƯỢNG / KẾ HOẠCH NGÀY</span>
-                      <span class="stat-card-value value-highlight" id="machine-detail-strokes-target-val">0 / 0</span>
-                      <span class="stat-card-desc" id="machine-detail-strokes-target-pct">0%</span>
+                      <span class="stat-card-label">SẢN LƯỢNG NGÀY</span>
+                      <span class="stat-card-value value-highlight" id="machine-detail-strokes-target-val">0</span>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">Sản lượng trong ngày</span>
                     </div>
                     <!-- 2. Tiến độ đơn hàng -->
                     <div class="detail-stat-card">
-                      <span class="stat-card-label">TIẾN ĐỘ ĐƠN HÀNG</span>
-                      <span class="stat-card-value" id="machine-detail-strokes-order-val">0 / 0</span>
-                      <span class="stat-card-desc" id="machine-detail-strokes-order-pct">0%</span>
+                      <span class="stat-card-label">SẢN LƯỢNG THỰC TẾ / LỆNH SẢN XUẤT</span>
+                      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                        <span class="stat-card-value" id="machine-detail-strokes-order-val" style="margin-top: 0;">0 / 0</span>
+                        <span id="machine-detail-strokes-order-pct" style="color: #00e676; font-weight: 700; font-size: 1.1rem;">0%</span>
+                      </div>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thực tế / Tổng lệnh sản xuất</span>
                     </div>
-                    <!-- 3. Hiệu suất sản lượng (OEE) -->
+                    <!-- 3. Thời gian máy chạy / Thời gian ca -->
                     <div class="detail-stat-card">
-                      <span class="stat-card-label">HIỆU SUẤT SẢN LƯỢNG (OEE)</span>
-                      <span class="stat-card-value" id="machine-detail-oee-val">0%</span>
-                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thực tế / Kế hoạch</span>
+                      <span class="stat-card-label">THỜI GIAN MÁY CHẠY / THỜI GIAN CA</span>
+                      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                        <span class="stat-card-value" id="machine-detail-run-shift-val" style="margin-top: 0;">00:00:00 / 08:00:00</span>
+                        <span id="machine-detail-time-eff-val" style="color: #00e676; font-weight: 700; font-size: 1.1rem;">0%</span>
+                      </div>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian máy chạy / Thời gian ca</span>
                     </div>
-                    <!-- 4. Hiệu suất thời gian -->
+                    <!-- 4. Thời gian chạy thử / Thời gian máy chạy -->
                     <div class="detail-stat-card">
-                      <span class="stat-card-label">HIỆU SUẤT THỜI GIAN</span>
-                      <span class="stat-card-value" id="machine-detail-time-eff-val">0%</span>
-                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thời gian chạy / Thời gian ca</span>
+                      <span class="stat-card-label">THỜI GIAN CHẠY THỬ / THỜI GIAN MÁY CHẠY</span>
+                      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                        <span class="stat-card-value" id="machine-detail-trial-run-val" style="margin-top: 0;">00:00:00 / 00:00:00</span>
+                        <span id="machine-detail-trial-pct" style="color: #00e676; font-weight: 700; font-size: 1.1rem;">0%</span>
+                      </div>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian chạy thử / Thời gian máy chạy</span>
                     </div>
-                    <!-- 5. Thời gian chạy thử máy -->
+                    <!-- 5. Thời gian sản xuất / Thời gian máy chạy -->
                     <div class="detail-stat-card">
-                      <span class="stat-card-label">THỜI GIAN CHẠY THỬ MÁY</span>
-                      <span class="stat-card-value" id="machine-detail-trial-val">00:00:00</span>
-                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thời gian chạy thử máy</span>
+                      <span class="stat-card-label">THỜI GIAN SẢN XUẤT / THỜI GIAN MÁY CHẠY</span>
+                      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                        <span class="stat-card-value" id="machine-detail-prod-run-val" style="margin-top: 0;">00:00:00 / 00:00:00</span>
+                        <span id="machine-detail-prod-pct" style="color: #00e676; font-weight: 700; font-size: 1.1rem;">0%</span>
+                      </div>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian sản xuất / Thời gian máy chạy</span>
                     </div>
-                    <!-- 6. Thời gian chạy máy -->
+                    <!-- 6. Thời gian còn lại ước tính -->
                     <div class="detail-stat-card">
-                      <span class="stat-card-label">THỜI GIAN CHẠY MÁY</span>
-                      <span class="stat-card-value" id="machine-detail-run-val">00:00:00</span>
-                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">= Thời gian chạy máy</span>
+                      <span class="stat-card-label">THỜI GIAN CÒN LẠI ƯỚC TÍNH</span>
+                      <span class="stat-card-value value-highlight" id="machine-detail-est-val">00:00:00</span>
+                      <span class="stat-card-desc" style="color: var(--text-secondary); font-size: 0.72rem;">Ước tính thời gian còn lại hoàn thành</span>
                     </div>
                   </div>
                 </div>

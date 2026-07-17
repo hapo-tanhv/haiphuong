@@ -12,10 +12,44 @@
                 </div>
               </div>
 
+              <div class="filter-select-group">
+                <span class="filter-select-title" data-i18n="report_machine_select_title">Chọn Máy</span>
+                <div class="custom-select-wrapper">
+                  <select id="report-machine-select">
+                    <option value="all" data-i18n="report_all_presses">Tất cả thiết bị</option>
+                    <optgroup label="Máy dập" style="background: var(--bg-secondary); color: var(--text-primary);">
+                      <option value="01">Máy dập 01</option>
+                      <option value="02">Máy dập 02</option>
+                      <option value="03">Máy dập 03</option>
+                      <option value="04">Máy dập 04</option>
+                      <option value="05">Máy dập 05</option>
+                      <option value="06">Máy dập 06</option>
+                      <option value="07">Máy dập 07</option>
+                      <option value="08">Máy dập 08</option>
+                      <option value="09">Máy dập 09</option>
+                      <option value="10">Máy dập 10</option>
+                    </optgroup>
+                    <optgroup label="Máy vít" style="background: var(--bg-secondary); color: var(--text-primary);">
+                      <option value="11">Máy vít 11</option>
+                      <option value="12">Máy vít 12</option>
+                      <option value="13">Máy vít 13</option>
+                      <option value="14">Máy vít 14</option>
+                      <option value="15">Máy vít 15</option>
+                      <option value="16">Máy vít 16</option>
+                      <option value="17">Máy vít 17</option>
+                      <option value="18">Máy vít 18</option>
+                      <option value="19">Máy vít 19</option>
+                      <option value="20">Máy vít 20</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+
                <div class="filter-date-group" id="report-date-filter-group" style="display: flex; flex-direction: column; gap: 6px;">
                  <span class="filter-select-title" id="report-date-filter-title">Chọn Ngày</span>
                  <div class="date-picker-wrapper" style="position: relative; display: flex; align-items: center; gap: 10px;">
                    <input type="text" id="report-date-picker" class="custom-date-input" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; outline: none; font-size: 0.85rem; font-family: inherit; width: 160px; height: 38px; box-sizing: border-box;">
+                   <input type="text" id="report-week-picker" class="custom-date-input hidden" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; outline: none; font-size: 0.85rem; font-family: inherit; width: 230px; height: 38px; box-sizing: border-box;">
                    <input type="text" id="report-month-picker" class="custom-date-input hidden" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: #fff; padding: 10px 14px; border-radius: 8px; outline: none; font-size: 0.85rem; font-family: inherit; width: 160px; height: 38px; box-sizing: border-box;">
                    <div class="custom-select-wrapper hidden" id="report-year-picker-wrapper" style="width: 120px;">
                      <select id="report-year-picker" style="width: 100%;">
@@ -27,25 +61,6 @@
                    </div>
                  </div>
                </div>
-
-              <div class="filter-select-group">
-                <span class="filter-select-title" data-i18n="report_machine_select_title">Chọn Máy</span>
-                <div class="custom-select-wrapper">
-                  <select id="report-machine-select">
-                    <option value="all" data-i18n="report_all_presses">Tất cả máy dập</option>
-                    <option value="01">Máy dập 01</option>
-                    <option value="02">Máy dập 02</option>
-                    <option value="03">Máy dập 03</option>
-                    <option value="04">Máy dập 04</option>
-                    <option value="05">Máy dập 05</option>
-                    <option value="06">Máy dập 06</option>
-                    <option value="07">Máy dập 07</option>
-                    <option value="08">Máy dập 08</option>
-                    <option value="09">Máy dập 09</option>
-                    <option value="10">Máy dập 10</option>
-                  </select>
-                </div>
-              </div>
 
               <button class="export-btn font-bold" id="report-export-btn">
                 <svg class="export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -59,14 +74,12 @@
 
             <!-- KPI Row (6 Cards) -->
             <div class="report-kpi-row">
-              <!-- Card 1: Strokes / Plan -->
+              <!-- Card 1: Daily Strokes -->
               <div class="r-kpi-card">
                 <div class="r-kpi-content" style="width: 100%;">
-                  <span class="r-kpi-label" data-i18n="report_kpi_strokes_target">SẢN LƯỢNG / KẾ HOẠCH NGÀY</span>
-                  <span class="r-kpi-value" id="r-kpi-strokes-target" style="font-weight: 700;">
-                    <span style="color: #00d2ff;">0</span> / <span style="color: #ffffff;">0</span>
-                  </span>
-                  <span class="r-kpi-subtext" id="r-kpi-strokes-target-pct" style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px;">0%</span>
+                  <span class="r-kpi-label" data-i18n="overview_kpi_daily_strokes">SẢN LƯỢNG</span>
+                  <span class="r-kpi-value" id="r-kpi-strokes-target" style="color: #00d2ff; font-weight: 700;">0</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">Sản lượng</span>
                 </div>
               </div>
 
@@ -74,46 +87,47 @@
               <div class="r-kpi-card">
                 <div class="r-kpi-content" style="width: 100%;">
                   <span class="r-kpi-label" data-i18n="report_kpi_order_progress">TIẾN ĐỘ ĐƠN HÀNG</span>
-                  <span class="r-kpi-value" id="r-kpi-order-progress" style="font-weight: 700;">
-                    <span style="color: #00d2ff;">0</span> / <span style="color: #ffffff;">0</span>
-                  </span>
-                  <span class="r-kpi-subtext" id="r-kpi-order-progress-pct" style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px;">0%</span>
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                    <span class="r-kpi-value" id="r-kpi-order-progress" style="color: #00d2ff; font-weight: 700;">0</span>
+                    <span id="r-kpi-order-progress-pct" style="color: #00e676; font-weight: 700; font-size: 1.1rem;">0%</span>
+                  </div>
+                  <span class="r-kpi-subtext" id="r-kpi-order-progress-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Sản lượng thực tế / Tổng lệnh sản xuất</span>
                 </div>
               </div>
 
-              <!-- Card 3: OEE -->
-              <div class="r-kpi-card">
-                <div class="r-kpi-content" style="width: 100%;">
-                  <span class="r-kpi-label" data-i18n="report_kpi_oee">HIỆU SUẤT SẢN LƯỢNG (OEE)</span>
-                  <span class="r-kpi-value" id="r-kpi-oee" style="color: #00d2ff; font-weight: 700;">0%</span>
-                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thực tế / Kế hoạch</span>
-                </div>
-              </div>
-
-              <!-- Card 4: Time Efficiency -->
+              <!-- Card 3: Time Efficiency -->
               <div class="r-kpi-card">
                 <div class="r-kpi-content" style="width: 100%;">
                   <span class="r-kpi-label" data-i18n="report_kpi_time_eff">HIỆU SUẤT THỜI GIAN</span>
                   <span class="r-kpi-value" id="r-kpi-time-eff" style="color: #00d2ff; font-weight: 700;">0%</span>
-                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian chạy / Thời gian ca</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian máy chạy / Thời gian ca</span>
                 </div>
               </div>
 
-              <!-- Card 5: Trial Time -->
+              <!-- Card 4: Trial Time -->
               <div class="r-kpi-card">
                 <div class="r-kpi-content" style="width: 100%;">
                   <span class="r-kpi-label" data-i18n="report_kpi_trial_time">THỜI GIAN CHẠY THỬ MÁY</span>
                   <span class="r-kpi-value" id="r-kpi-trial-time" style="color: #00d2ff; font-weight: 700;">00:00:00</span>
-                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian chạy thử máy</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">Thời gian chạy thử máy</span>
+                </div>
+              </div>
+
+              <!-- Card 5: Total Production Time -->
+              <div class="r-kpi-card">
+                <div class="r-kpi-content" style="width: 100%;">
+                  <span class="r-kpi-label">THỜI GIAN SẢN XUẤT</span>
+                  <span class="r-kpi-value" id="r-kpi-total-runtime" style="color: #00d2ff; font-weight: 700;">00:00:00</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">Thời gian sản xuất</span>
                 </div>
               </div>
 
               <!-- Card 6: Running Time -->
               <div class="r-kpi-card">
                 <div class="r-kpi-content" style="width: 100%;">
-                  <span class="r-kpi-label" data-i18n="report_kpi_run_time">THỜI GIAN CHẠY MÁY</span>
+                  <span class="r-kpi-label" data-i18n="report_kpi_run_time">THỜI GIAN MÁY CHẠY</span>
                   <span class="r-kpi-value" id="r-kpi-run-time" style="color: #00d2ff; font-weight: 700;">00:00:00</span>
-                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">= Thời gian chạy máy</span>
+                  <span class="r-kpi-subtext" style="color: var(--text-secondary); font-size: 0.72rem; margin-top: 4px;">Thời gian máy chạy</span>
                 </div>
               </div>
             </div>
@@ -217,8 +231,11 @@
                   </thead>
                   <tbody id="report-table-body">
                     <!-- Dynamically rendered via JS -->
-                  </tbody>
                 </table>
+              </div>
+              <div class="table-footer">
+                <span class="table-info" id="report-table-info"></span>
+                <div class="pagination" id="report-pagination"></div>
               </div>
             </div>
           </div>

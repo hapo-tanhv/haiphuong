@@ -6,6 +6,10 @@ function initAlarms() {
       if (!alarmsData.some(a => a.id === alarmId)) {
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour12: false });
         const dateStr = new Date().toLocaleDateString('vi-VN');
+        const isScrew = m.type !== 'stamping';
+        const typeLabel = m.type === 'stamping' ? 'MÁY DẬP' : 
+                          m.type === 'heading' ? 'MÁY ĐẤM VÍT' : 'MÁY REN VÍT';
+        const typeDesc = typeLabel.toLowerCase();
         alarmsData.unshift({
           id: alarmId,
           time: timeStr,
@@ -13,14 +17,17 @@ function initAlarms() {
           severity: 'critical',
           severityText: 'Nghiêm trọng',
           code: 'MACHINE-STOPPED-ALERT',
-          machine: `MÁY DẬP #${id}`,
-          desc: `Thiết bị đang dừng hoạt động bất thường (Trạng thái stopped). Yêu cầu kiểm tra kết nối điện.`,
+          machine: `${typeLabel} #${id}`,
+          desc: `Thiết bị ${typeDesc} đang dừng hoạt động bất thường (Trạng thái stopped). Yêu cầu kiểm tra kết nối điện.`,
           status: 'emergency',
           statusText: 'Khẩn cấp'
         });
       }
     }
   });
+  if (window.updateNotificationBadge) {
+    window.updateNotificationBadge();
+  }
 }
 
 function renderAlarmsView() {
@@ -55,9 +62,10 @@ function renderAlarmsView() {
   
   const query = state.alarmSearchQuery.toLowerCase().trim();
   const filtered = alarmsData.filter(a => {
-    const matchesSearch = a.code.toLowerCase().includes(query) || 
-                          a.machine.toLowerCase().includes(query) || 
-                          a.desc.toLowerCase().includes(query);
+    const alarmMachine = a.machine || (a.machineId ? `${a.type || 'Thiết bị'} #${a.machineId}` : '');
+    const matchesSearch = (a.code || '').toLowerCase().includes(query) || 
+                          alarmMachine.toLowerCase().includes(query) || 
+                          (a.desc || '').toLowerCase().includes(query);
     const matchesSeverity = state.alarmSeverityFilter === 'all' || a.severity === state.alarmSeverityFilter;
     return matchesSearch && matchesSeverity;
   });
@@ -154,10 +162,25 @@ function renderAlarmsView() {
     }
 
     const alarmDesc = alarmDescMap[a.code] ? alarmDescMap[a.code][lang] : a.desc;
+    
+    let datePart = a.date || '';
+    let timePart = a.time || '';
+    if (a.time && a.time.includes(' ')) {
+      const parts = a.time.split(' ');
+      datePart = parts[0];
+      timePart = parts[1];
+    }
+
     let alarmMachine = a.machine;
-    if (lang === 'en') {
+    if (!alarmMachine && a.machineId) {
+      const typeLabel = a.type || (a.machineId.startsWith('RV') || a.machineId.startsWith('DV') || a.machineId.startsWith('ĐB') ? 'MÁY VÍT' : 'MÁY DẬP');
+      alarmMachine = `${typeLabel} #${a.machineId}`;
+    }
+
+    if (lang === 'en' && alarmMachine) {
       alarmMachine = alarmMachine
         .replace('MÁY DẬP', 'PRESS')
+        .replace('MÁY VÍT', 'SCREW')
         .replace('MÁY ÉP', 'PRESS')
         .replace('MÁY CẮT', 'CUTTER')
         .replace('TOÀN HỆ THỐNG', 'SYSTEM-WIDE')
@@ -167,8 +190,8 @@ function renderAlarmsView() {
     tr.innerHTML = `
       <td>
         <div class="alarm-time-cell">
-          <span class="time">${a.time}</span>
-          <span class="date">${a.date}</span>
+          <span class="time">${timePart}</span>
+          <span class="date">${datePart}</span>
         </div>
       </td>
       <td>
@@ -177,7 +200,7 @@ function renderAlarmsView() {
       <td>
         <div class="alarm-code-cell">
           <span class="code font-bold">${a.code}</span>
-          <span class="machine">${alarmMachine}</span>
+          <span class="machine">${alarmMachine || ''}</span>
         </div>
       </td>
       <td>${alarmDesc}</td>
@@ -266,6 +289,7 @@ function openAlarmModal(alarm) {
   if (lang === 'en') {
     alarmMachine = alarmMachine
       .replace('MÁY DẬP', 'PRESS')
+      .replace('MÁY VÍT', 'SCREW')
       .replace('MÁY ÉP', 'PRESS')
       .replace('MÁY CẮT', 'CUTTER')
       .replace('TOÀN HỆ THỐNG', 'SYSTEM-WIDE')

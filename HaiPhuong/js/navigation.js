@@ -16,20 +16,17 @@ function initNavigation() {
   const navItems = document.querySelectorAll('.nav-item');
   const viewSections = document.querySelectorAll('.view-section');
 
+  // Xử lý sự kiện click cho các mục nav-item chính
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
       
       const tabId = item.getAttribute('data-tab');
-      if (!tabId) return;
-      if (tabId === state.currentTab) {
-        if (tabId === 'machine') {
-          const detailSection = document.getElementById('view-machine-detail');
-          const listSection = document.getElementById('view-machine');
-          if (detailSection && listSection && !detailSection.classList.contains('hidden')) {
-            detailSection.classList.add('hidden');
-            listSection.classList.remove('hidden');
-            updateHeaderTitle('machine');
+      if (!tabId) {
+        if (item.classList.contains('nav-dropdown-toggle')) {
+          const parent = item.closest('.nav-item-parent');
+          if (parent) {
+            parent.classList.toggle('expanded');
           }
         }
         return;
@@ -37,6 +34,15 @@ function initNavigation() {
 
       // Cập nhật State hiện tại
       state.currentTab = tabId;
+      if (tabId === 'overview-screw') {
+        state.overviewType = 'screw';
+      } else if (tabId === 'overview-heading') {
+        state.overviewType = 'heading';
+      } else if (tabId === 'overview-threading') {
+        state.overviewType = 'threading';
+      } else if (tabId === 'overview') {
+        state.overviewType = 'stamping';
+      }
 
       // Cập nhật class 'active' trên menu Sidebar
       navItems.forEach(nav => nav.classList.remove('active'));
@@ -44,7 +50,8 @@ function initNavigation() {
 
       // Chuyển đổi ẩn/hiện các phân vùng Content View
       viewSections.forEach(section => {
-        if (section.id === `view-${tabId}`) {
+        if (section.id === `view-${tabId}` || 
+            ((tabId === 'overview' || tabId === 'overview-screw' || tabId === 'overview-heading' || tabId === 'overview-threading') && section.id === 'view-overview')) {
           section.classList.remove('hidden');
         } else {
           section.classList.add('hidden');
@@ -54,14 +61,28 @@ function initNavigation() {
       // Cập nhật Tiêu đề & Phụ đề trên Header động
       updateHeaderTitle(tabId);
 
-      // Nếu chuyển sang tab máy dập, thực hiện render danh sách máy dập
-      if (tabId === 'machine') {
-        renderMachineList();
+      // Nếu là trang dập/vít, vẽ lại grid và cập nhật chi tiết máy mặc định
+      if (tabId === 'overview' || tabId === 'overview-screw' || tabId === 'overview-heading' || tabId === 'overview-threading') {
+        renderOverviewGrid();
+        let defaultMachineId = '03';
+        if (state.overviewType === 'screw' || state.overviewType === 'heading') {
+          defaultMachineId = '11';
+        } else if (state.overviewType === 'threading') {
+          defaultMachineId = '16';
+        }
+        updateActiveMachineDetails(defaultMachineId);
       }
 
       // Nếu chuyển sang tab lịch sử, thực hiện render bảng lịch sử và biểu đồ
       if (tabId === 'history') {
         renderHistoryTable();
+      }
+
+      // Nếu chuyển sang tab quản lý lệnh sản xuất, thực hiện render quản lý lệnh sản xuất
+      if (tabId === 'production-orders') {
+        if (typeof renderProductionOrdersView === 'function') {
+          renderProductionOrdersView();
+        }
       }
 
       // Nếu chuyển sang tab báo cáo, thực hiện render báo cáo và biểu đồ
@@ -90,5 +111,13 @@ function initNavigation() {
         alertTab.click();
       }
     });
+  }
+
+  // Tự động mở rộng dropdown nếu tab hiện tại là máy đấm hoặc máy ren
+  const activeTabId = state.currentTab;
+  if (activeTabId === 'overview-heading' || activeTabId === 'overview-threading') {
+    const tabEl = document.querySelector(`.nav-item[data-tab="${activeTabId}"]`);
+    const parent = tabEl ? tabEl.closest('.nav-item-parent') : null;
+    if (parent) parent.classList.add('expanded');
   }
 }

@@ -43,16 +43,16 @@
           
           <div class="kpi-sub-stats-grid">
             <div class="kpi-sub-stat-item">
-              <span class="sub-stat-lbl" data-i18n="kpi_strokes_title">SẢN LƯỢNG THỰC TẾ</span>
-              <span class="sub-stat-val">12.568 <span class="sub-stat-unit" data-i18n="overview_strokes_unit">lần</span></span>
+              <span class="sub-stat-lbl" data-i18n="overview_kpi_trial_time">THỜI GIAN CHẠY THỬ (TB)</span>
+              <span class="sub-stat-val" id="system-trial-time">-</span>
             </div>
             <div class="kpi-sub-stat-item">
-              <span class="sub-stat-lbl" data-i18n="kpi_target_day_title">TỔNG KẾ HOẠCH NGÀY</span>
-              <span class="sub-stat-val">15.000 <span class="sub-stat-unit" data-i18n="overview_strokes_unit">lần</span></span>
+              <span class="sub-stat-lbl" data-i18n="overview_kpi_production_time">THỜI GIAN SẢN XUẤT (TB)</span>
+              <span class="sub-stat-val" id="system-production-time">-</span>
             </div>
             <div class="kpi-sub-stat-item">
-              <span class="sub-stat-lbl" data-i18n="kpi_total_order_title">TỔNG LỆNH SX</span>
-              <span class="sub-stat-val">120.000 <span class="sub-stat-unit" data-i18n="overview_strokes_unit">lần</span></span>
+              <span class="sub-stat-lbl" data-i18n="overview_kpi_running_time">THỜI GIAN MÁY CHẠY (TB)</span>
+              <span class="sub-stat-val" id="system-running-time">-</span>
             </div>
           </div>
           
@@ -125,16 +125,9 @@
           <div class="perf-boxes-row">
             <div class="perf-box">
               <div class="perf-box-details">
-                <span class="perf-box-lbl" data-i18n="perf_plan_efficiency">HIỆU SUẤT KẾ HOẠCH (TB)</span>
-                <span class="perf-box-val" id="overview-plan-efficiency-avg">83.7%</span>
-                <span class="perf-box-sub">= Thực tế / Kế hoạch</span>
-              </div>
-            </div>
-            <div class="perf-box">
-              <div class="perf-box-details">
                 <span class="perf-box-lbl" data-i18n="perf_time_efficiency">HIỆU SUẤT THỜI GIAN (TB)</span>
                 <span class="perf-box-val" id="overview-time-efficiency-avg">64.6%</span>
-                <span class="perf-box-sub">= Thời gian chạy / Thời gian ca</span>
+                <span class="perf-box-sub">= Thời gian máy chạy / Thời gian ca</span>
               </div>
             </div>
           </div>
@@ -155,7 +148,7 @@
           <line x1="12" y1="16" x2="12" y2="12"></line>
           <line x1="12" y1="8" x2="12.01" y2="8"></line>
         </svg>
-        <span data-i18n="overview_grid_helper">Nhấn vào từng máy để xem chi tiết và lịch sử hoạt động</span>
+        <span data-i18n="overview_grid_helper">Nhấn vào từng máy để xem chi tiết</span>
       </div>
     </div>
   </div>

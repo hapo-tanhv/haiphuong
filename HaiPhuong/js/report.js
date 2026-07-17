@@ -1,6 +1,20 @@
 let weeklyChart = null;
 let achievementDonutChart = null;
 
+function timeToSeconds(timeStr) {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(':');
+  if (parts.length !== 3) return 0;
+  return parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+}
+
+function secondsToTime(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 function getReportData(range, machineId) {
   const lang = state.language || 'vi';
   let factor = 1.0;
@@ -16,7 +30,9 @@ function getReportData(range, machineId) {
 
   let selectedDateStr = "";
   if (normalizedRange === 'day') {
-    selectedDateStr = state.reportSelectedDate || '09/07/2026';
+    selectedDateStr = state.reportSelectedDate || (window.getTodayFormattedStr ? window.getTodayFormattedStr() : '09/07/2026');
+  } else if (normalizedRange === 'week') {
+    selectedDateStr = state.reportSelectedWeek || 'Tuần 29 (13/07/2026 - 19/07/2026)';
   } else if (normalizedRange === 'month') {
     selectedDateStr = state.reportSelectedMonth || '07/2026';
   } else if (normalizedRange === 'year') {
@@ -48,7 +64,12 @@ function getReportData(range, machineId) {
 
   // Table shift rows & dynamic strokes accumulation
   const tableRows = [];
-  const machinesList = machineId === 'all' ? ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'] : [machineId];
+  const isScrewMode = (parseInt(machineId, 10) >= 11 && parseInt(machineId, 10) <= 20) || (machineId === 'all' && state.overviewType === 'screw');
+  const machinesList = machineId === 'all'
+    ? (isScrewMode
+        ? ['11', '12', '13', '14', '15', '16', '17', '18', '19', '20']
+        : ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'])
+    : [machineId];
   
   let totalStrokes = 0;
   let totalTarget = 0;
@@ -79,9 +100,14 @@ function getReportData(range, machineId) {
     totalStrokes += (strokesMorning + strokesAfternoon);
     totalTarget += (targetMorning + targetAfternoon);
 
+    const isScrew = (parseInt(mId, 10) >= 11 && parseInt(mId, 10) <= 20);
+    const machineNameLabel = lang === 'vi' 
+      ? (isScrew ? 'Máy vít' : 'Máy dập') 
+      : (isScrew ? 'Screw' : 'Press');
+
     tableRows.push({
       shift: lang === 'vi' ? 'Ca Sáng (08:00 - 12:00)' : 'Morning Shift (08:00 - 12:00)',
-      machine: `${lang === 'vi' ? 'Máy dập' : 'Press'} ${mId}`,
+      machine: `${machineNameLabel} ${mId}`,
       strokes: strokesMorning,
       uptime: formatHoursStr(240 * daysCount),
       downtime: `${Math.round(10 * daysCount)}m`,
@@ -92,7 +118,7 @@ function getReportData(range, machineId) {
 
     tableRows.push({
       shift: lang === 'vi' ? 'Ca Chiều (14:00 - 18:00)' : 'Afternoon Shift (14:00 - 18:00)',
-      machine: `${lang === 'vi' ? 'Máy dập' : 'Press'} ${mId}`,
+      machine: `${machineNameLabel} ${mId}`,
       strokes: strokesAfternoon,
       uptime: formatHoursStr(210 * daysCount),
       downtime: `${Math.round(30 * daysCount)}m`,
@@ -261,7 +287,32 @@ function getReportData(range, machineId) {
 let operatingChartInstance = null;
 let yieldChartInstance = null;
 
-function renderReportView() {
+async function fetchReportData(range, machineId) {
+  let selectedDateStr = "";
+  let normalizedRange = range === '24h' ? 'day' : (range === '7d' ? 'week' : range);
+  if (normalizedRange === 'day') {
+    selectedDateStr = state.reportSelectedDate || (window.getTodayFormattedStr ? window.getTodayFormattedStr() : '09/07/2026');
+  } else if (normalizedRange === 'week') {
+    selectedDateStr = state.reportSelectedWeek || 'Tuần 29';
+  } else if (normalizedRange === 'month') {
+    selectedDateStr = state.reportSelectedMonth || '07/2026';
+  } else if (normalizedRange === 'year') {
+    selectedDateStr = state.reportSelectedYear || '2026';
+  }
+
+  try {
+    const res = await fetch(`${window.basePath || ''}Api/GetReportData?range=${range}&machineId=${machineId}&selectedDate=${encodeURIComponent(selectedDateStr)}`);
+    const json = await res.json();
+    if (json.success) {
+      return json;
+    }
+  } catch (err) {
+    console.warn("Failed to fetch report from server, using local fallback.", err);
+  }
+  return getReportData(range, machineId);
+}
+
+async function renderReportView() {
   const lang = state.language || 'vi';
   
   // Điều khiển ẩn hiện và cập nhật giá trị các trường lịch
@@ -273,16 +324,27 @@ function renderReportView() {
   const dateTitleEl = document.getElementById('report-date-filter-title');
 
   if (dateGroup && datePicker && monthPicker && yearPickerWrapper) {
+    const weekPicker = document.getElementById('report-week-picker');
     if (range === 'day') {
       dateGroup.classList.remove('hidden');
       datePicker.classList.remove('hidden');
+      if (weekPicker) weekPicker.classList.add('hidden');
       monthPicker.classList.add('hidden');
       yearPickerWrapper.classList.add('hidden');
       if (dateTitleEl) dateTitleEl.textContent = lang === 'vi' ? 'Chọn Ngày' : 'Select Day';
       datePicker.value = state.reportSelectedDate;
+    } else if (range === 'week') {
+      dateGroup.classList.remove('hidden');
+      datePicker.classList.add('hidden');
+      if (weekPicker) weekPicker.classList.remove('hidden');
+      monthPicker.classList.add('hidden');
+      yearPickerWrapper.classList.add('hidden');
+      if (dateTitleEl) dateTitleEl.textContent = lang === 'vi' ? 'Chọn Tuần' : 'Select Week';
+      if (weekPicker) weekPicker.value = state.reportSelectedWeek || 'Tuần 29 (13/07/2026 - 19/07/2026)';
     } else if (range === 'month') {
       dateGroup.classList.remove('hidden');
       datePicker.classList.add('hidden');
+      if (weekPicker) weekPicker.classList.add('hidden');
       monthPicker.classList.remove('hidden');
       yearPickerWrapper.classList.add('hidden');
       if (dateTitleEl) dateTitleEl.textContent = lang === 'vi' ? 'Chọn Tháng' : 'Select Month';
@@ -290,6 +352,7 @@ function renderReportView() {
     } else if (range === 'year') {
       dateGroup.classList.remove('hidden');
       datePicker.classList.add('hidden');
+      if (weekPicker) weekPicker.classList.add('hidden');
       monthPicker.classList.add('hidden');
       yearPickerWrapper.classList.remove('hidden');
       if (dateTitleEl) dateTitleEl.textContent = lang === 'vi' ? 'Chọn Năm' : 'Select Year';
@@ -301,19 +364,15 @@ function renderReportView() {
     }
   }
 
-  const data = getReportData(state.reportTimeRange, state.reportMachineId);
+  const data = await fetchReportData(state.reportTimeRange, state.reportMachineId);
   
-  // 1. Plan / strokes target card
+  // 1. Daily Strokes Card (Sản lượng ngày)
   const kpiStrokesTarget = document.getElementById('r-kpi-strokes-target');
   if (kpiStrokesTarget) {
-    kpiStrokesTarget.innerHTML = `<span style="color: #00d2ff;">${data.actualStrokesStr}</span> / <span style="color: #ffffff;">${data.targetStrokesStr}</span>`;
-  }
-  const kpiStrokesTargetPct = document.getElementById('r-kpi-strokes-target-pct');
-  if (kpiStrokesTargetPct) {
-    kpiStrokesTargetPct.textContent = `${data.actualPct}%`;
+    kpiStrokesTarget.innerHTML = `<span style="color: #00d2ff;">${data.actualStrokesStr}</span>`;
   }
 
-  // 2. Order Progress card
+  // 2. Order Progress Card (Tiến độ đơn hàng)
   const kpiOrderProgress = document.getElementById('r-kpi-order-progress');
   if (kpiOrderProgress) {
     kpiOrderProgress.innerHTML = `<span style="color: #00d2ff;">${data.progressOrderStr}</span> / <span style="color: #ffffff;">${data.targetOrderStr}</span>`;
@@ -322,29 +381,35 @@ function renderReportView() {
   if (kpiOrderProgressPct) {
     kpiOrderProgressPct.textContent = `${data.progressPct}%`;
   }
-
-  // 3. OEE Card
-  const kpiOee = document.getElementById('r-kpi-oee');
-  if (kpiOee) {
-    kpiOee.textContent = `${data.oee}%`;
+  const kpiOrderProgressSub = document.getElementById('r-kpi-order-progress-subtext');
+  if (kpiOrderProgressSub) {
+    kpiOrderProgressSub.textContent = '= Sản lượng thực tế / Tổng lệnh sản xuất';
   }
 
-  // 4. Time Efficiency Card
+  // 3. Time Efficiency Card (Hiệu suất thời gian)
   const kpiTimeEff = document.getElementById('r-kpi-time-eff');
   if (kpiTimeEff) {
     kpiTimeEff.textContent = `${data.timeEff}%`;
   }
 
-  // 5. Trial Time Card
+  // 4. Trial Time Card (Thời gian chạy thử máy)
   const kpiTrialTime = document.getElementById('r-kpi-trial-time');
   if (kpiTrialTime) {
     kpiTrialTime.textContent = data.trialTimeStr;
   }
 
-  // 6. Running Time Card
+  // 5. Running Time Card (Thời gian máy chạy)
   const kpiRunTime = document.getElementById('r-kpi-run-time');
   if (kpiRunTime) {
     kpiRunTime.textContent = data.runTimeStr;
+  }
+
+  // 6. Total Production Time Card (Thời gian sản xuất)
+  const kpiTotalRuntime = document.getElementById('r-kpi-total-runtime');
+  if (kpiTotalRuntime) {
+    const runSec = timeToSeconds(data.runTimeStr);
+    const trialSec = timeToSeconds(data.trialTimeStr);
+    kpiTotalRuntime.textContent = secondsToTime(Math.max(0, runSec - trialSec));
   }
 
   // Bar chart rendering
@@ -428,19 +493,21 @@ function renderReportView() {
       yieldChartInstance.destroy();
     }
 
-    const remainingVal = Math.max(0, data.targetStrokes - data.actualStrokes);
-    const isEmpty = data.targetStrokes === 0;
+    const actualStrokesNum = data.actualStrokes !== undefined ? data.actualStrokes : parseFloat((data.actualStrokesStr || '0').replace(/[\.,]/g, ''));
+    const targetStrokesNum = data.targetStrokes !== undefined ? data.targetStrokes : parseFloat((data.targetStrokesStr || '0').replace(/[\.,]/g, ''));
+    const remainingVal = Math.max(0, targetStrokesNum - actualStrokesNum);
+    const isEmpty = targetStrokesNum === 0;
 
     document.getElementById('r-yield-efficiency-pct').textContent = `${data.actualPct}%`;
     document.getElementById('r-yield-legend-actual').textContent = data.actualStrokesStr;
-    document.getElementById('r-yield-legend-remaining').textContent = remainingVal.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US');
+    document.getElementById('r-yield-legend-remaining').textContent = remainingVal.toLocaleString('en-US');
 
     yieldChartInstance = new Chart(pieCtx, {
       type: 'doughnut',
       data: {
         labels: lang === 'vi' ? ['Thực tế', 'Còn lại'] : ['Actual', 'Remaining'],
         datasets: [{
-          data: isEmpty ? [0, 1] : [data.actualStrokes, remainingVal],
+          data: isEmpty ? [0, 1] : [actualStrokesNum, remainingVal],
           backgroundColor: isEmpty ? ['#16223f'] : ['#00d2ff', '#16223f'],
           borderColor: isEmpty ? ['#16223f'] : ['#00d2ff', '#4e5b6e'],
           borderWidth: 1
@@ -460,22 +527,92 @@ function renderReportView() {
   }
 
   const tableBody = document.getElementById('report-table-body');
-  if (tableBody) {
+  const tableInfo = document.getElementById('report-table-info');
+  const pagination = document.getElementById('report-pagination');
+
+  if (tableBody && tableInfo && pagination) {
     tableBody.innerHTML = '';
-    data.tableRows.forEach(row => {
-      const tr = document.createElement('tr');
-      const isOk = parseFloat(row.oee) >= 95;
-      tr.innerHTML = `
-        <td>${row.shift}</td>
-        <td>${row.machine}</td>
-        <td style="text-align: center;">${row.strokes.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}</td>
-        <td style="text-align: center;">${row.uptime}</td>
-        <td style="text-align: center; color: ${row.downtime !== '0m' && row.downtime !== '10m' ? '#ef4444' : 'var(--text-primary)'}">${row.downtime}</td>
-        <td style="text-align: center; color: ${isOk ? '#00e676' : 'var(--text-primary)'}; font-weight: 700;">${row.oee}</td>
-        <td style="text-align: center;"><span class="badge ${row.statusClass}">${row.status}</span></td>
+    const totalRecords = data.tableRows.length;
+    const totalPages = Math.ceil(totalRecords / state.reportRowsPerPage) || 1;
+
+    if (state.reportCurrentPage > totalPages) {
+      state.reportCurrentPage = totalPages;
+    }
+    if (state.reportCurrentPage < 1) {
+      state.reportCurrentPage = 1;
+    }
+
+    const startIndex = (state.reportCurrentPage - 1) * state.reportRowsPerPage;
+    const endIndex = Math.min(startIndex + state.reportRowsPerPage, totalRecords);
+    const paginatedRows = data.tableRows.slice(startIndex, endIndex);
+
+    const showText = lang === 'vi' ? 'Hiển thị' : 'Showing';
+    const ofText = lang === 'vi' ? 'của' : 'of';
+    const recordsText = lang === 'vi' ? 'bản ghi' : 'records';
+
+    if (totalRecords === 0) {
+      tableInfo.textContent = lang === 'vi' ? 'Hiển thị 0 - 0 của 0 bản ghi' : 'Showing 0 - 0 of 0 records';
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+            ${lang === 'vi' ? 'Không có dữ liệu vận hành nào.' : 'No operation data found.'}
+          </td>
+        </tr>
       `;
-      tableBody.appendChild(tr);
-    });
+      pagination.innerHTML = '';
+    } else {
+      tableInfo.textContent = `${showText} ${startIndex + 1} - ${endIndex} ${ofText} ${totalRecords} ${recordsText}`;
+
+      paginatedRows.forEach(row => {
+        const tr = document.createElement('tr');
+        const isOk = parseFloat(row.oee) >= 95;
+        tr.innerHTML = `
+          <td>${row.shift}</td>
+          <td>${row.machine}</td>
+          <td style="text-align: center;">${row.strokes.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}</td>
+          <td style="text-align: center;">${row.uptime}</td>
+          <td style="text-align: center; color: ${row.downtime !== '0m' && row.downtime !== '10m' ? '#ef4444' : 'var(--text-primary)'}">${row.downtime}</td>
+          <td style="text-align: center; color: ${isOk ? '#00e676' : 'var(--text-primary)'}; font-weight: 700;">${row.oee}</td>
+          <td style="text-align: center;"><span class="badge ${row.statusClass}">${row.status}</span></td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      pagination.innerHTML = '';
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = `page-link ${state.reportCurrentPage === 1 ? 'disabled' : ''}`;
+      prevBtn.innerHTML = `&lt;`;
+      prevBtn.addEventListener('click', () => {
+        if (state.reportCurrentPage > 1) {
+          state.reportCurrentPage--;
+          renderReportView();
+        }
+      });
+      pagination.appendChild(prevBtn);
+
+      for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `page-link ${state.reportCurrentPage === i ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', () => {
+          state.reportCurrentPage = i;
+          renderReportView();
+        });
+        pagination.appendChild(pageBtn);
+      }
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = `page-link ${state.reportCurrentPage === totalPages ? 'disabled' : ''}`;
+      nextBtn.innerHTML = `&gt;`;
+      nextBtn.addEventListener('click', () => {
+        if (state.reportCurrentPage < totalPages) {
+          state.reportCurrentPage++;
+          renderReportView();
+        }
+      });
+      pagination.appendChild(nextBtn);
+    }
   }
 
   // Khởi chạy biểu đồ tuần và biểu đồ đạt mục tiêu sản lượng
@@ -665,7 +802,71 @@ function updateAchievementDonutChart(tableRows) {
   });
 }
 
+async function populateReportMachineSelect() {
+  const machineSelect = document.getElementById('report-machine-select');
+  if (!machineSelect) return;
+
+  const lang = state.language || 'vi';
+
+  try {
+    const res = await fetch(`${window.basePath || ''}Api/GetMachines`);
+    const json = await res.json();
+    if (json.success && json.data) {
+      machineSelect.innerHTML = '';
+
+      const allStampingOption = document.createElement('option');
+      allStampingOption.value = 'all_stamping';
+      allStampingOption.textContent = lang === 'vi' ? 'Tất cả máy dập' : 'All Stamping Machines';
+      machineSelect.appendChild(allStampingOption);
+
+      const allScrewOption = document.createElement('option');
+      allScrewOption.value = 'all_screw';
+      allScrewOption.textContent = lang === 'vi' ? 'Tất cả máy vít' : 'All Screw Machines';
+      machineSelect.appendChild(allScrewOption);
+
+      const stampingGroup = document.createElement('optgroup');
+      stampingGroup.label = lang === 'vi' ? 'Máy dập' : 'Stamping Machines';
+      stampingGroup.style.background = 'var(--bg-secondary)';
+      stampingGroup.style.color = 'var(--text-primary)';
+
+      const headingGroup = document.createElement('optgroup');
+      headingGroup.label = lang === 'vi' ? 'Máy đấm đầu vít' : 'Screw Heading Machines';
+      headingGroup.style.background = 'var(--bg-secondary)';
+      headingGroup.style.color = 'var(--text-primary)';
+
+      const threadingGroup = document.createElement('optgroup');
+      threadingGroup.label = lang === 'vi' ? 'Máy cán ren vít' : 'Screw Threading Machines';
+      threadingGroup.style.background = 'var(--bg-secondary)';
+      threadingGroup.style.color = 'var(--text-primary)';
+
+      json.data.forEach(m => {
+        const option = document.createElement('option');
+        option.value = m.id;
+        option.textContent = m.name;
+
+        if (m.machineTypeId === 1) {
+          stampingGroup.appendChild(option);
+        } else if (m.machineTypeId === 2) {
+          headingGroup.appendChild(option);
+        } else if (m.machineTypeId === 3) {
+          threadingGroup.appendChild(option);
+        }
+      });
+
+      if (stampingGroup.children.length > 0) machineSelect.appendChild(stampingGroup);
+      if (headingGroup.children.length > 0) machineSelect.appendChild(headingGroup);
+      if (threadingGroup.children.length > 0) machineSelect.appendChild(threadingGroup);
+
+      machineSelect.value = state.reportMachineId || 'all_stamping';
+    }
+  } catch (err) {
+    console.warn("Failed to populate report machine filter from API:", err);
+  }
+}
+window.populateReportMachineSelect = populateReportMachineSelect;
+
 function initReportControls() {
+  populateReportMachineSelect();
   const timeSegmentContainer = document.getElementById('report-time-segments');
   if (timeSegmentContainer) {
     const btns = timeSegmentContainer.querySelectorAll('.segment-btn');
@@ -674,6 +875,7 @@ function initReportControls() {
         btns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.reportTimeRange = btn.getAttribute('data-range');
+        state.reportCurrentPage = 1;
         renderReportView();
       });
     });
@@ -683,6 +885,7 @@ function initReportControls() {
   if (machineSelect) {
     machineSelect.addEventListener('change', (e) => {
       state.reportMachineId = e.target.value;
+      state.reportCurrentPage = 1;
       renderReportView();
     });
   }
@@ -694,9 +897,56 @@ function initReportControls() {
       defaultDate: state.reportSelectedDate,
       onChange: function(selectedDates, dateStr) {
         state.reportSelectedDate = dateStr;
+        state.reportCurrentPage = 1;
         renderReportView();
       }
     });
+  }
+
+  const weekPicker = document.getElementById('report-week-picker');
+  if (weekPicker) {
+    function getWeekRangeString(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d.setDate(diff));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const getISOWeekNum = (dateVal) => {
+        const temp = new Date(Date.UTC(dateVal.getFullYear(), dateVal.getMonth(), dateVal.getDate()));
+        temp.setUTCDate(temp.getUTCDate() + 4 - (temp.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
+        return Math.ceil((((temp - yearStart) / 86400000) + 1) / 7);
+      };
+
+      const pad = (num) => String(num).padStart(2, '0');
+      const monStr = `${pad(monday.getDate())}/${pad(monday.getMonth() + 1)}/${monday.getFullYear()}`;
+      const sunStr = `${pad(sunday.getDate())}/${pad(sunday.getMonth() + 1)}/${sunday.getFullYear()}`;
+      const weekNum = getISOWeekNum(monday);
+
+      return `Tuần ${weekNum} (${monStr} - ${sunStr})`;
+    }
+
+    if (!state.reportSelectedWeek) {
+      state.reportSelectedWeek = getWeekRangeString(new Date('2026-07-13'));
+    }
+    
+    flatpickr(weekPicker, {
+      defaultDate: new Date('2026-07-13'),
+      onChange: function(selectedDates) {
+        if (selectedDates[0]) {
+          const weekStr = getWeekRangeString(selectedDates[0]);
+          state.reportSelectedWeek = weekStr;
+          setTimeout(() => {
+            weekPicker.value = weekStr;
+          }, 0);
+          state.reportCurrentPage = 1;
+          renderReportView();
+        }
+      }
+    });
+    weekPicker.value = state.reportSelectedWeek;
   }
 
   const monthPicker = document.getElementById('report-month-picker');
@@ -712,6 +962,7 @@ function initReportControls() {
       defaultDate: state.reportSelectedMonth,
       onChange: function(selectedDates, dateStr) {
         state.reportSelectedMonth = dateStr;
+        state.reportCurrentPage = 1;
         renderReportView();
       }
     });
@@ -721,6 +972,7 @@ function initReportControls() {
   if (yearSelect) {
     yearSelect.addEventListener('change', (e) => {
       state.reportSelectedYear = e.target.value;
+      state.reportCurrentPage = 1;
       renderReportView();
     });
   }

@@ -30,7 +30,7 @@
   pointer-events: none;
 }
 
-#machine-search-input {
+.search-box-wrapper input {
   width: 100%;
   padding: 12px 16px 12px 48px;
   background-color: var(--bg-secondary);
@@ -42,7 +42,7 @@
   transition: all 0.3s;
 }
 
-#machine-search-input:focus {
+.search-box-wrapper input:focus {
   outline: none;
   border-color: var(--accent-blue);
   box-shadow: 0 0 10px rgba(0, 210, 255, 0.15);

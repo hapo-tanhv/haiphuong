@@ -30,6 +30,7 @@ C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\roslyn\VBCSCompiler.exe.c
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\Antlr3.Runtime.dll
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\Microsoft.Web.Infrastructure.dll
+C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\MySql.Data.dll
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\Newtonsoft.Json.dll
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\System.Web.Helpers.dll
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\System.Web.Mvc.dll
@@ -49,8 +50,8 @@ C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\System.Web.WebPages.Razor
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\Newtonsoft.Json.xml
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\Antlr3.Runtime.pdb
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
-C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\HaiPhuong.csproj.AssemblyReference.cache
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\HaiPhuong.csproj.CoreCompileInputs.cache
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\HaiPhuong.csproj.CopyComplete
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\TestIndema.dll
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\TestIndema.pdb
+c:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\HaiPhuong.csproj.AssemblyReference.cache

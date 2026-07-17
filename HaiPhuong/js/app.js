@@ -49,9 +49,18 @@ function runSystemTests() {
   return { passed, failed };
 }
 
+function getISOWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return weekNo;
+}
+
 function startRealTimeClock() {
   const timeEl = document.querySelector('.time-widget .time-value');
   const dateEl = document.querySelector('.time-widget .date-value');
+  const weekEl = document.querySelector('.week-widget .week-value');
   
   if (!timeEl || !dateEl) return;
 
@@ -66,6 +75,11 @@ function startRealTimeClock() {
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
+
+    const week = getISOWeek(now);
+    if (weekEl) {
+      weekEl.textContent = `Tuần ${week}`;
+    }
     dateEl.textContent = `${day}/${month}/${year}`;
   }
 
@@ -74,7 +88,15 @@ function startRealTimeClock() {
 }
 
 // 6. Khởi tạo ứng dụng khi trình duyệt tải xong DOM
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Nạp dữ liệu động từ Database trước khi khởi tạo giao diện
+  if (typeof reloadMachinesFromServer === 'function') {
+    await reloadMachinesFromServer();
+  }
+  if (typeof reloadAlarmsFromServer === 'function') {
+    await reloadAlarmsFromServer();
+  }
+
   initNavigation();
   initMachineSelection();
   initSearchAndFilter();

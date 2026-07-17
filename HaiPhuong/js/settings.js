@@ -319,4 +319,378 @@ function initSettingsControls() {
       headerLangDropdown.classList.add('hidden');
     });
   }
+
+  // Khởi tạo các cấu hình ca, tăng ca, thông số kỹ thuật và thẻ lệnh sản xuất in PDF
+  initMachineSettingsConfig();
+}
+
+function initMachineSettingsConfig() {
+  const machineSelect = document.getElementById('config-machine-select');
+  if (!machineSelect) return;
+
+  const categorySelect = document.getElementById('config-machine-category-select');
+  const searchInput = document.getElementById('config-machine-search');
+  const lang = state.language || 'vi';
+
+  // Load machine configuration
+  const loadMachineConfig = async (id) => {
+    const m = machinesData[id];
+    if (!m) return;
+
+    // Shift selection
+    const shiftSelect = document.getElementById('config-shift-select');
+    if (shiftSelect) {
+      shiftSelect.value = m.shiftHours || "8";
+    }
+
+    // Overtime checkbox
+    const otCheckbox = document.getElementById('config-overtime-checkbox');
+    if (otCheckbox) {
+      otCheckbox.checked = !!m.overtimeRegistered;
+    }
+
+    // Tải động danh mục thuộc tính theo loại máy từ database
+    const attrsContainer = document.getElementById('technical-attrs-inputs');
+    if (attrsContainer) {
+      attrsContainer.innerHTML = '';
+      const attrs = m.attributes || {};
+      
+      try {
+        const typeId = m.machineTypeId || (m.type === 'screw' ? 2 : 1);
+        const res = await fetch(`${window.basePath || ''}Api/GetMachineTypeAttributes?typeId=${typeId}`);
+        const json = await res.json();
+        
+        if (json.success && json.data) {
+          json.data.forEach(attr => {
+            const key = attr.key;
+            const label = lang === 'vi' ? attr.displayName : attr.key;
+            const unitSuffix = attr.unit ? ` (${attr.unit})` : '';
+            const val = attrs[key] || '';
+            
+            const item = document.createElement('div');
+            item.style.cssText = 'display: flex; flex-direction: column; gap: 6px;';
+            item.innerHTML = `
+              <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">${label}${unitSuffix}:</span>
+              <input type="text" class="tech-attr-input" data-key="${key}" value="${val}" style="padding: 10px 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; outline: none; font-size: 0.85rem; transition: all 0.2s; width: 100%;">
+            `;
+            attrsContainer.appendChild(item);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load dynamic attributes from server", err);
+      }
+    }
+  };
+
+  const populateSelect = () => {
+    const selectedCategory = categorySelect ? categorySelect.value : 'all';
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    // Lưu lại máy đang được chọn trước đó
+    const prevSelected = machineSelect.value;
+    
+    machineSelect.innerHTML = '';
+    let firstId = null;
+    let foundPrev = false;
+
+    Object.keys(machinesData).sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})).forEach(id => {
+      const m = machinesData[id];
+      
+      // Lọc theo Category
+      if (selectedCategory !== 'all') {
+        if (selectedCategory === 'stamping' && m.machineTypeId !== 1) return;
+        if (selectedCategory === 'heading' && m.machineTypeId !== 2) return;
+        if (selectedCategory === 'threading' && m.machineTypeId !== 3) return;
+      }
+
+      // Lọc theo từ khóa tìm kiếm (mã máy, tên máy)
+      if (searchQuery !== '') {
+        const matchMachine = id.toLowerCase().includes(searchQuery) || m.name.toLowerCase().includes(searchQuery);
+        if (!matchMachine) return;
+      }
+
+      const typeLabel = m.machineTypeId === 1 ? (lang === 'vi' ? 'Máy Dập' : 'Stamping Press') :
+                        m.machineTypeId === 2 ? (lang === 'vi' ? 'Máy Đấm Đầu' : 'Heading Machine') :
+                        (lang === 'vi' ? 'Máy Cán Ren' : 'Threading Machine');
+      
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = `${typeLabel} #${id} (${m.name})`;
+      machineSelect.appendChild(opt);
+
+      if (!firstId) firstId = id;
+      if (id === prevSelected) foundPrev = true;
+    });
+
+    if (foundPrev) {
+      machineSelect.value = prevSelected;
+    } else if (firstId) {
+      machineSelect.value = firstId;
+      loadMachineConfig(firstId);
+    } else {
+      const attrsContainer = document.getElementById('technical-attrs-inputs');
+      if (attrsContainer) attrsContainer.innerHTML = '';
+    }
+  };
+
+  if (categorySelect) {
+    categorySelect.onchange = populateSelect;
+  }
+  if (searchInput) {
+    searchInput.oninput = populateSelect;
+  }
+
+  // Populate first time
+  populateSelect();
+
+  // Change machine dropdown listener
+  machineSelect.addEventListener('change', (e) => {
+    loadMachineConfig(e.target.value);
+  });
+
+  // 3. Save Machine Configuration
+  const saveOnlyBtn = document.getElementById('btn-save-only-machine-config');
+  if (saveOnlyBtn) {
+    saveOnlyBtn.addEventListener('click', async () => {
+      const activeId = machineSelect.value;
+      const m = machinesData[activeId];
+      if (!m) return;
+
+      const shiftSelect = document.getElementById('config-shift-select');
+      const otCheckbox = document.getElementById('config-overtime-checkbox');
+
+      // Thu thập thông số kỹ thuật động
+      const attributes = {};
+      const techInputs = document.querySelectorAll('.tech-attr-input');
+      techInputs.forEach(inp => {
+        const key = inp.getAttribute('data-key');
+        attributes[key] = inp.value;
+      });
+
+      // 1. Lưu cấu hình thuộc tính máy xuống DB
+      try {
+        await fetch(`${window.basePath || ''}Api/SaveMachineConfig`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: activeId,
+            attributesJson: JSON.stringify(attributes),
+            ipAddress: '',
+            port: null,
+            isMonitored: m.isMonitored !== false
+          })
+        });
+      } catch (err) {
+        console.error("Failed to save machine config to DB", err);
+      }
+
+      // 2. Lưu cấu hình ca làm việc xuống DB
+      if (shiftSelect) {
+        const hours = parseInt(shiftSelect.value, 10) || 8;
+        let startTime = "07:30:00";
+        let endTime = hours === 12 ? "19:30:00" : "15:30:00";
+        
+        try {
+          await fetch(`${window.basePath || ''}Api/SaveShiftConfig`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code: activeId,
+              shiftType: hours === 12 ? "Ca 12h" : "Ca 8h",
+              startTime: startTime,
+              endTime: endTime
+            })
+          });
+        } catch (err) {
+          console.error("Failed to save shift config to DB", err);
+        }
+      }
+
+      // Cập nhật State cục bộ
+      if (shiftSelect) {
+        m.shiftHours = parseInt(shiftSelect.value, 10);
+        m.runtimeMax = `${m.shiftHours.toString().padStart(2, '0')}:00:00`;
+      }
+      if (otCheckbox) {
+        m.overtimeRegistered = otCheckbox.checked;
+      }
+      techInputs.forEach(inp => {
+        const key = inp.getAttribute('data-key');
+        if (m.attributes) {
+          m.attributes[key] = inp.value;
+        }
+      });
+
+      // Lưu đệm local
+      localStorage.setItem('machinesData', JSON.stringify(machinesData));
+
+      // Reload dữ liệu từ máy chủ sau khi lưu
+      if (typeof reloadMachinesFromServer === 'function') {
+        await reloadMachinesFromServer();
+      }
+
+      if (typeof renderOverviewGrid === 'function') renderOverviewGrid();
+      if (typeof renderHistoryTable === 'function') renderHistoryTable();
+
+      const successMsg = lang === 'vi' 
+        ? `Lưu cấu hình thiết bị #${activeId} thành công!`
+        : `Saved configuration for Machine #${activeId} successfully!`;
+      showToast(successMsg, 'success');
+    });
+  }
+
+  // Khởi tạo tính năng thêm thiết bị mới
+  initAddMachineModal();
+}
+
+function initAddMachineModal() {
+  const addBtn = document.getElementById('btn-add-machine');
+  const modal = document.getElementById('settings-add-machine-modal');
+  const closeBtn = document.getElementById('add-machine-close');
+  const cancelBtn = document.getElementById('add-machine-cancel');
+  const submitBtn = document.getElementById('add-machine-submit');
+  const typeSelect = document.getElementById('add-machine-type');
+  const attrsContainer = document.getElementById('add-machine-dynamic-attributes');
+
+  if (!modal) return;
+
+  const showModal = async () => {
+    // Reset form fields
+    document.getElementById('add-machine-code').value = '';
+    document.getElementById('add-machine-name').value = '';
+    document.getElementById('add-machine-monitored').checked = true;
+    attrsContainer.innerHTML = '';
+
+    // Load machine types from API
+    try {
+      const res = await fetch(`${window.basePath || ''}Api/GetMachineTypes`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        typeSelect.innerHTML = '';
+        json.data.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.textContent = t.name;
+          typeSelect.appendChild(opt);
+        });
+
+        // Trigger change to load attributes for first type
+        if (json.data.length > 0) {
+          typeSelect.value = json.data[0].id;
+          loadDynamicAttributes(json.data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load machine types", err);
+    }
+
+    modal.classList.remove('hidden');
+  };
+
+  const hideModal = () => {
+    modal.classList.add('hidden');
+  };
+
+  const loadDynamicAttributes = async (typeId) => {
+    attrsContainer.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.85rem;">Đang tải thuộc tính...</span>';
+    try {
+      const res = await fetch(`${window.basePath || ''}Api/GetMachineTypeAttributes?typeId=${typeId}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        attrsContainer.innerHTML = '';
+        json.data.forEach(attr => {
+          const div = document.createElement('div');
+          div.style.cssText = 'display: flex; flex-direction: column; gap: 6px; text-align: left; align-items: stretch;';
+          
+          const labelText = attr.displayName + (attr.unit ? ` (${attr.unit})` : '');
+          div.innerHTML = `
+            <span style="color: #a0aec0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">${labelText}</span>
+            <input type="text" class="add-machine-attr-input" data-key="${attr.key}" placeholder="Nhập ${attr.displayName.toLowerCase()}..." style="width: 100%; padding: 10px 12px; background: #0b1426; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; outline: none;">
+          `;
+          attrsContainer.appendChild(div);
+        });
+      } else {
+        attrsContainer.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.85rem;">Không có thông số đặc thù.</span>';
+      }
+    } catch (err) {
+      console.error("Failed to load attributes", err);
+      attrsContainer.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.85rem;">Lỗi tải thuộc tính.</span>';
+    }
+  };
+
+  if (addBtn) addBtn.addEventListener('click', showModal);
+  if (closeBtn) closeBtn.addEventListener('click', hideModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
+
+  if (typeSelect) {
+    typeSelect.addEventListener('change', (e) => {
+      loadDynamicAttributes(e.target.value);
+    });
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async () => {
+      const code = document.getElementById('add-machine-code').value.trim();
+      const name = document.getElementById('add-machine-name').value.trim();
+      const typeId = typeSelect.value;
+      const isMonitored = document.getElementById('add-machine-monitored').checked;
+      const lang = state.language || 'vi';
+
+      if (!code || !name) {
+        showToast(lang === 'vi' ? 'Vui lòng điền đầy đủ Mã máy và Tên máy!' : 'Please fill in Machine Code and Name!', 'error');
+        return;
+      }
+
+      // Collect attributes
+      const attributes = {};
+      const inputs = document.querySelectorAll('.add-machine-attr-input');
+      inputs.forEach(inp => {
+        const key = inp.getAttribute('data-key');
+        attributes[key] = inp.value.trim();
+      });
+
+      // Submit to backend
+      try {
+        const res = await fetch(`${window.basePath || ''}Api/AddMachine`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            code: code,
+            name: name,
+            typeId: typeId,
+            isMonitored: isMonitored,
+            attributes: attributes
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast(json.message || (lang === 'vi' ? 'Thêm mới thiết bị thành công!' : 'Machine added successfully!'), 'success');
+          
+          // Reload machines in state
+          if (typeof reloadMachinesFromServer === 'function') {
+            await reloadMachinesFromServer();
+          }
+
+          // Refresh selector on settings page
+          if (typeof initMachineSettingsConfig === 'function') {
+            initMachineSettingsConfig();
+          }
+
+          // Redraw grids on Overview
+          if (typeof renderOverviewGrid === 'function') {
+            renderOverviewGrid();
+          }
+
+          hideModal();
+        } else {
+          showToast(json.message || 'Lỗi thêm mới thiết bị.', 'error');
+        }
+      } catch (err) {
+        console.error("Failed to add machine", err);
+        showToast(lang === 'vi' ? 'Lỗi kết nối máy chủ.' : 'Connection error.', 'error');
+      }
+    });
+  }
 }
