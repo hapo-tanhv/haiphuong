@@ -125,10 +125,21 @@ function updateDailyStats(id, dateStr) {
   const strokesNum = parseInt(m.strokes.replace(/[\.,]/g, ''), 10);
   const orderActualNum = parseInt((m.orderActual || '0').replace(/[\.,]/g, ''), 10);
   
-  // Pseudo-random deterministic variations based on date selected
-  const multiplier = 0.85 + (seed % 31) / 200; // 0.85 to 1.0
-  const dynamicStrokes = Math.floor(strokesNum * multiplier);
-  const dynamicOrderActual = Math.floor(orderActualNum * multiplier);
+  const parseSecs = (timeStr) => {
+    if (!timeStr || timeStr === '---' || timeStr === '00:00:00') return 0;
+    const parts = timeStr.split(':');
+    if (parts.length !== 3) return 0;
+    return parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+  };
+
+  // Kiểm tra nếu ngày được chọn là ngày hôm nay
+  const todayStr = new Date().toLocaleDateString('sv-SE');
+  const isToday = (dateStr === todayStr);
+
+  // Chỉ tính dao động ngẫu nhiên cho dữ liệu lịch sử quá khứ
+  const multiplier = isToday ? 1.0 : (0.85 + (seed % 31) / 200); // 0.85 đến 1.0
+  const dynamicStrokes = isToday ? strokesNum : Math.floor(strokesNum * multiplier);
+  const dynamicOrderActual = isToday ? orderActualNum : Math.floor(orderActualNum * multiplier);
   
   const dailyTargetNum = parseInt(m.dailyTarget.replace(/[\.,]/g, ''), 10);
   const totalOrderNum = parseInt(m.totalOrder.replace(/[\.,]/g, ''), 10);
@@ -137,11 +148,11 @@ function updateDailyStats(id, dateStr) {
   const orderPct = totalOrderNum > 0 ? ((dynamicOrderActual / totalOrderNum) * 100).toFixed(1) + '%' : '0%';
   
   const baseTimeEff = parseFloat(m.timeEfficiency) || 60;
-  const timeEffPct = Math.min(100, (baseTimeEff * multiplier)).toFixed(1) + '%';
+  const timeEffPct = isToday ? m.timeEfficiency : (Math.min(100, (baseTimeEff * multiplier)).toFixed(1) + '%');
   
   const isRunning = m.status === 'running';
-  let runtimeSecs = isRunning ? (14000 + (seed % 14000)) : 0;
-  let trialSecs = isRunning ? (300 + (seed % 600)) : 0;
+  let runtimeSecs = isToday ? parseSecs(m.runtime) : (isRunning ? (14000 + (seed % 14000)) : 0);
+  let trialSecs = isToday ? parseSecs(m.trialTime) : (isRunning ? (300 + (seed % 600)) : 0);
 
   const formatSecs = (totalSecs) => {
     const h = Math.floor(totalSecs / 3600).toString().padStart(2, '0');
@@ -170,7 +181,7 @@ function updateDailyStats(id, dateStr) {
   const runShiftValEl = document.getElementById('machine-detail-run-shift-val');
   const timeEffValEl = document.getElementById('machine-detail-time-eff-val');
   if (runShiftValEl) {
-    runShiftValEl.innerHTML = `<span style="color: #00d2ff;">${m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00'}</span> <span class="val-white">/ ${m.runtimeMax}</span>`;
+    runShiftValEl.innerHTML = `<span style="color: #00d2ff;">${isToday ? m.runtime : (m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00')}</span> <span class="val-white">/ ${m.runtimeMax}</span>`;
   }
   if (timeEffValEl) {
     timeEffValEl.textContent = timeEffPct;
@@ -181,7 +192,7 @@ function updateDailyStats(id, dateStr) {
   const trialPctEl = document.getElementById('machine-detail-trial-pct');
   const trialRatio = runtimeSecs > 0 ? ((trialSecs / runtimeSecs) * 100).toFixed(1) : '0.0';
   if (trialRunValEl) {
-    trialRunValEl.innerHTML = `<span style="color: #00d2ff;">${m.status === 'running' ? formatSecs(trialSecs) : '00:00:00'}</span> <span class="val-white">/ ${m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00'}</span>`;
+    trialRunValEl.innerHTML = `<span style="color: #00d2ff;">${isToday ? m.trialTime : (m.status === 'running' ? formatSecs(trialSecs) : '00:00:00')}</span> <span class="val-white">/ ${isToday ? m.runtime : (m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00')}</span>`;
   }
   if (trialPctEl) {
     trialPctEl.textContent = `${trialRatio}%`;
@@ -193,7 +204,7 @@ function updateDailyStats(id, dateStr) {
   const prodSecs = Math.max(0, runtimeSecs - trialSecs);
   const prodRatio = runtimeSecs > 0 ? ((prodSecs / runtimeSecs) * 100).toFixed(1) : '0.0';
   if (prodRunValEl) {
-    prodRunValEl.innerHTML = `<span style="color: #00d2ff;">${m.status === 'running' ? formatSecs(prodSecs) : '00:00:00'}</span> <span class="val-white">/ ${m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00'}</span>`;
+    prodRunValEl.innerHTML = `<span style="color: #00d2ff;">${isToday ? formatSecs(prodSecs) : (m.status === 'running' ? formatSecs(prodSecs) : '00:00:00')}</span> <span class="val-white">/ ${isToday ? m.runtime : (m.status === 'running' ? formatSecs(runtimeSecs) : '00:00:00')}</span>`;
   }
   if (prodPctEl) {
     prodPctEl.textContent = `${prodRatio}%`;
@@ -775,16 +786,17 @@ async function showMachineDetail(id) {
   // 6. Initialize Single Date Picker (Part 1)
   const singleDateInput = document.getElementById('detail-single-date');
   if (singleDateInput) {
+    const todayStr = new Date().toLocaleDateString('sv-SE');
     singleDateFlatpickrInstance = flatpickr(singleDateInput, {
       dateFormat: "Y-m-d",
-      defaultDate: "2026-07-09",
+      defaultDate: todayStr,
       altInput: true,
       altFormat: "d/m/Y",
       onChange: function(selectedDates, dateStr) {
         updateDailyStats(id, dateStr);
       }
     });
-    updateDailyStats(id, "2026-07-09");
+    updateDailyStats(id, todayStr);
   }
 
   // 7. Initialize Toggle Buttons

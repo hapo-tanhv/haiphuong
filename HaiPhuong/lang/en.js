@@ -31,7 +31,7 @@ window.translationsEn = {
   kpi_target_day_title: "TOTAL DAILY TARGET",
   kpi_total_order_title: "TOTAL PRODUCTION ORDER",
   kpi_stopped_title: "MACHINES STOPPED",
-  chart_strokes_time_title: "ACTUAL OUTPUT OVER TIME",
+  chart_strokes_time_title: "TIME EFFICIENCY",
   chart_filter_today: "Today",
   perf_plan_efficiency: "OUTPUT EFFICIENCY (AVG)",
   perf_time_efficiency: "TIME EFFICIENCY (AVG)",

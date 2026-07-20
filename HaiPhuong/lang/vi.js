@@ -31,7 +31,7 @@ window.translationsVi = {
   kpi_target_day_title: "TỔNG KẾ HOẠCH NGÀY",
   kpi_total_order_title: "TỔNG LỆNH SX",
   kpi_stopped_title: "MÁY DỪNG",
-  chart_strokes_time_title: "SẢN LƯỢNG THỰC TẾ THEO THỜI GIAN",
+  chart_strokes_time_title: "HIỆU SUẤT THỜI GIAN",
   chart_filter_today: "Hôm nay",
   perf_plan_efficiency: "HIỆU SUẤT SẢN LƯỢNG (TB)",
   perf_time_efficiency: "HIỆU SUẤT THỜI GIAN (TB)",

@@ -230,6 +230,17 @@ function displayProductionOrdersTable() {
       statusText = lang === 'vi' ? 'Đã hủy' : 'Cancelled';
     }
 
+    const isStartable = (o.status === 'pending');
+    const isCancellable = (o.status === 'running' || o.status === 'pending');
+
+    const startBtnHtml = isStartable
+      ? `<button class="orders-action-btn btn-start-order" data-order-id="${o.id}" style="background: rgba(0, 230, 118, 0.1); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">${lang === 'vi' ? 'Chạy' : 'Start'}</button>`
+      : `<button class="orders-action-btn btn-start-order" disabled style="background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: not-allowed; font-weight: 600; opacity: 0.35;">${lang === 'vi' ? 'Chạy' : 'Start'}</button>`;
+
+    const cancelBtnHtml = isCancellable
+      ? `<button class="orders-action-btn btn-cancel-order" data-order-id="${o.id}" style="background: rgba(255, 23, 68, 0.1); color: #ff1744; border: 1px solid rgba(255, 23, 68, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">${lang === 'vi' ? 'Hủy' : 'Cancel'}</button>`
+      : `<button class="orders-action-btn btn-cancel-order" disabled style="background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: not-allowed; font-weight: 600; opacity: 0.35;">${lang === 'vi' ? 'Hủy' : 'Cancel'}</button>`;
+
     const tr = document.createElement('tr');
     tr.style.cssText = 'border-bottom: 1px solid rgba(255,255,255,0.03);';
     tr.innerHTML = `
@@ -255,14 +266,10 @@ function displayProductionOrdersTable() {
       </td>
       <td style="padding: 12px 8px; text-align: center;">
         <div style="display: flex; gap: 8px; justify-content: center;">
-          <button class="orders-action-btn" onclick="exportOrderPDF('${o.orderNo}', '${o.productCode}', '${o.productName}', '${o.machineId}', '${o.stage}', ${plan})" style="background: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid rgba(0, 210, 255, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">PDF</button>
-          <button class="orders-action-btn" onclick="viewOrderDetails('${o.orderNo}')" style="background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">Chi tiết</button>
-          ${(o.status === 'pending') ? `
-            <button class="orders-action-btn btn-start-order" data-order-id="${o.id}" style="background: rgba(0, 230, 118, 0.1); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">Chạy</button>
-          ` : ''}
-          ${(o.status === 'running' || o.status === 'pending') ? `
-            <button class="orders-action-btn btn-cancel-order" data-order-id="${o.id}" style="background: rgba(255, 23, 68, 0.1); color: #ff1744; border: 1px solid rgba(255, 23, 68, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">Hủy</button>
-          ` : ''}
+          <button class="orders-action-btn" onclick="exportOrderPDF('${o.orderNo}', '${o.productCode}', '${o.productName}', '${o.machineId}', '${o.stage}', ${plan}, ${act})" style="background: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid rgba(0, 210, 255, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">PDF</button>
+          <button class="orders-action-btn" onclick="viewOrderDetails('${o.orderNo}')" style="background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">${lang === 'vi' ? 'Chi tiết' : 'Details'}</button>
+          ${startBtnHtml}
+          ${cancelBtnHtml}
         </div>
       </td>
     `;
@@ -270,7 +277,7 @@ function displayProductionOrdersTable() {
   });
 
   // Bind cancel button events
-  const cancelBtns = tableBody.querySelectorAll('.btn-cancel-order');
+  const cancelBtns = tableBody.querySelectorAll('.btn-cancel-order:not([disabled])');
   cancelBtns.forEach(btn => {
     btn.onclick = async (e) => {
       const orderId = btn.getAttribute('data-order-id');
@@ -308,7 +315,7 @@ function displayProductionOrdersTable() {
   });
 
   // Bind start button events
-  const startBtns = tableBody.querySelectorAll('.btn-start-order');
+  const startBtns = tableBody.querySelectorAll('.btn-start-order:not([disabled])');
   startBtns.forEach(btn => {
     btn.onclick = async (e) => {
       const orderId = btn.getAttribute('data-order-id');
@@ -536,14 +543,14 @@ function initOrderSaveAndExport() {
   }
 }
 
-function exportOrderPDF(orderNo, productCode, productName, machineId, stage, plannedQty) {
+function exportOrderPDF(orderNo, productCode, productName, machineId, stage, plannedQty, actualQty = null) {
   const lang = state.language || 'vi';
   const logoUrl = `${window.location.origin}${window.basePath || '/'}Image/logo.png`;
   const orderDate = new Date().toLocaleDateString('vi-VN');
 
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = `
-    <div style="font-family: 'Inter', sans-serif; color: #000; background-color: #fff; padding: 20px; border: 2.5px solid #000; max-width: 720px; margin: 0 auto; box-sizing: border-box;">
+    <div style="font-family: 'Inter', sans-serif; color: #000; background-color: #fff; padding: 15px; border: 2px solid #000; max-width: 720px; margin: 0 auto; box-sizing: border-box;">
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         .pdf-order-card * {
@@ -552,13 +559,13 @@ function exportOrderPDF(orderNo, productCode, productName, machineId, stage, pla
       </style>
       <div class="pdf-order-card">
         <!-- Header -->
-        <div style="display: flex; align-items: center; border-bottom: 2.5px solid #000; padding-bottom: 12px; margin-bottom: 0px; gap: 20px;">
-          <div style="flex: 0 0 100px; display: flex; justify-content: center; align-items: center;">
-            <img src="${logoUrl}" alt="Logo" style="max-width: 90px; height: auto;">
+        <div style="display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 0px; gap: 20px;">
+          <div style="flex: 0 0 80px; display: flex; justify-content: center; align-items: center;">
+            <img src="${logoUrl}" alt="Logo" style="max-width: 70px; height: auto;">
           </div>
           <div style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; padding-right: 40px;">
-            <div style="font-size: 1.25rem; font-weight: bold; text-transform: uppercase; margin: 0; padding-bottom: 4px; letter-spacing: 0.5px;">CÔNG TY TNHH HẢI PHƯƠNG</div>
-            <div style="font-size: 2.3rem; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 1px;">THẺ LỆNH SẢN XUẤT</div>
+            <div style="font-size: 0.95rem; font-weight: bold; text-transform: uppercase; margin: 0; padding-bottom: 2px; letter-spacing: 0.5px;">CÔNG TY TNHH HẢI PHƯƠNG</div>
+            <div style="font-size: 1.7rem; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 1px;">THẺ LỆNH SẢN XUẤT</div>
           </div>
         </div>
         
@@ -567,99 +574,150 @@ function exportOrderPDF(orderNo, productCode, productName, machineId, stage, pla
           <tbody>
             <!-- 1. Ngày tạo lệnh -->
             <tr style="border-bottom: 1px solid #000;">
-              <td style="border-right: 1px solid #000; padding: 12px 15px; width: 38%; font-weight: bold; font-size: 0.95rem; text-transform: uppercase;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <td style="border-right: 1px solid #000; padding: 6px 15px; width: 35%; font-weight: bold; font-size: 0.8rem; text-transform: uppercase;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>NGÀY TẠO LỆNH:</span>
               </div>
             </td>
-            <td style="padding: 12px 15px; font-size: 1.15rem; font-weight: bold; font-family: 'Arial', sans-serif; letter-spacing: 0.5px;">
+            <td style="padding: 6px 15px; font-size: 0.95rem; font-weight: bold; font-family: 'Arial', sans-serif; letter-spacing: 0.5px;">
               ${orderDate}
             </td>
           </tr>
 
           <!-- 2. Lệnh sản xuất số -->
           <tr style="border-bottom: 1px solid #000;">
-            <td style="border-right: 1px solid #000; padding: 12px 15px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                 <span>LỆNH SẢN XUẤT SỐ:</span>
               </div>
             </td>
-            <td style="padding: 12px 15px; font-size: 1.15rem; font-weight: bold; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">
+            <td style="padding: 6px 15px; font-size: 0.95rem; font-weight: bold; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">
               ${orderNo}
             </td>
           </tr>
 
           <!-- 3. Mã sản phẩm -->
           <tr style="border-bottom: 1px solid #000;">
-            <td style="border-right: 1px solid #000; padding: 12px 15px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                 <span>MÃ SẢN PHẨM:</span>
               </div>
             </td>
-            <td style="padding: 12px 15px; font-size: 1.15rem; font-weight: bold; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">
+            <td style="padding: 6px 15px; font-size: 0.95rem; font-weight: bold; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">
               ${productCode}
             </td>
           </tr>
 
           <!-- 4. Tên sản phẩm -->
           <tr style="border-bottom: 1px solid #000;">
-            <td style="border-right: 1px solid #000; padding: 12px 15px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
                 <span>TÊN SẢN PHẨM:</span>
               </div>
             </td>
-            <td style="padding: 12px 15px; font-size: 1.15rem; font-weight: bold; font-family: 'Arial', sans-serif;">
+            <td style="padding: 6px 15px; font-size: 0.95rem; font-weight: bold; font-family: 'Arial', sans-serif;">
               ${productName}
             </td>
           </tr>
 
           <!-- 5. Mã máy -->
           <tr style="border-bottom: 1px solid #000;">
-            <td style="border-right: 1px solid #000; padding: 12px 15px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                 <span>MÃ MÁY:</span>
               </div>
             </td>
-            <td style="padding: 12px 15px; font-size: 1.15rem; font-weight: bold; font-family: 'Arial', sans-serif; text-transform: uppercase;">
+            <td style="padding: 6px 15px; font-size: 0.95rem; font-weight: bold; font-family: 'Arial', sans-serif; text-transform: uppercase;">
               ${machineId}
             </td>
           </tr>
 
           <!-- 6. Công đoạn -->
           <tr style="border-bottom: 1px solid #000;">
-            <td style="border-right: 1px solid #000; padding: 12px 15px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 <span>CÔNG ĐOẠN:</span>
               </div>
             </td>
-            <td style="padding: 12px 15px; font-size: 1.15rem; font-weight: bold; font-family: 'Arial', sans-serif;">
+            <td style="padding: 6px 15px; font-size: 0.95rem; font-weight: bold; font-family: 'Arial', sans-serif;">
               ${stage}
             </td>
           </tr>
 
           <!-- 7. Số lượng (PCS) -->
-          <tr>
-            <td style="border-right: 1px solid #000; padding: 12px 15px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="4 17 12 21 20 17"></polyline><polyline points="4 12 12 16 20 12"></polyline><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
+          <tr style="border-bottom: 1px solid #000;">
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="4 17 12 21 20 17"></polyline><polyline points="4 12 12 16 20 12"></polyline><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
                 <span>SỐ LƯỢNG (PCS):</span>
               </div>
             </td>
-            <td style="padding: 12px 15px; font-size: 1.3rem; font-weight: bold; font-family: 'Arial', sans-serif;">
+            <td style="padding: 6px 15px; font-size: 1.1rem; font-weight: bold; font-family: 'Arial', sans-serif;">
               <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span>${plannedQty.toLocaleString('en-US')}</span>
                 <span>PCS</span>
               </div>
             </td>
           </tr>
-        </tbody>
-      </table>
+
+          <!-- 8. Số lượng sản xuất thực tế -->
+          <tr style="border-bottom: 1px solid #000;">
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="4 17 12 21 20 17"></polyline><polyline points="4 12 12 16 20 12"></polyline><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
+                <span>SỐ LƯỢNG SẢN XUẤT THỰC TẾ:</span>
+              </div>
+            </td>
+            <td style="padding: 6px 15px; font-size: 1.1rem; font-weight: bold; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span>${(actualQty !== null && actualQty !== undefined) ? actualQty.toLocaleString('en-US') : ''}</span>
+                <span>PCS</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 9. Người phụ trách -->
+          <tr style="border-bottom: 1px solid #000;">
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>NGƯỜI PHỤ TRÁCH:</span>
+              </div>
+            </td>
+            <td style="padding: 6px 15px; font-size: 0.95rem; font-weight: bold; font-family: 'Arial', sans-serif;">
+              <!-- Để trống để tự điền -->
+            </td>
+          </tr>
+
+          <!-- 10. Tình trạng nhập kho -->
+          <tr>
+            <td style="border-right: 1px solid #000; padding: 6px 15px; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; font-family: 'Arial', sans-serif;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink: 0;">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                <span>TÌNH TRẠNG NHẬP KHO:</span>
+              </div>
+            </td>
+            <td style="padding: 6px 15px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 16px; height: 16px; border: 2px solid #000; border-radius: 4px; flex-shrink: 0;"></div>
+                <span style="font-size: 0.95rem; font-weight: bold; font-family: 'Inter', sans-serif;">Đã nhập kho</span>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   `;
@@ -669,7 +727,7 @@ function exportOrderPDF(orderNo, productCode, productName, machineId, stage, pla
     filename:     `LENH-SX-${orderNo}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2, useCORS: true },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    jsPDF:        { unit: 'mm', format: 'a5', orientation: 'landscape' }
   };
 
   html2pdf().set(opt).from(tempDiv.firstElementChild).save().then(() => {

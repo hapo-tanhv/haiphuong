@@ -86,8 +86,34 @@ async function renderHistoryTable() {
 
   const query = state.historySearchQuery.toLowerCase().trim();
   const filteredRecords = activeHistorySource.filter(r => {
-    const isScrew = r.deviceType ? (r.deviceType !== 'MÁY DẬP') : (parseInt(r.machineId, 10) >= 11);
-    const typeLabel = r.deviceType ? r.deviceType.toLowerCase() : (isScrew ? 'máy vít' : 'máy dập');
+    const typeVal = r.type || r.deviceType;
+    let isStamping = false;
+    let isHeading = false;
+    let isThreading = false;
+
+    if (typeVal) {
+      const typeUpper = typeVal.toUpperCase();
+      isStamping = typeUpper === 'MÁY DẬP' || typeUpper === 'STAMPING';
+      isHeading = typeUpper === 'MÁY ĐẤM VÍT' || typeUpper === 'SCREW_HEADING' || typeUpper === 'HEADING';
+      isThreading = typeUpper === 'MÁY REN VÍT' || typeUpper === 'SCREW_THREADING' || typeUpper === 'THREADING';
+    } else {
+      const machineIdNum = parseInt(r.machineId, 10) || 0;
+      if (machineIdNum >= 1 && machineIdNum <= 10) {
+        isStamping = true;
+      } else if (machineIdNum >= 11 && machineIdNum <= 15) {
+        isHeading = true;
+      } else if (machineIdNum >= 16) {
+        isThreading = true;
+      } else if (r.machineId.startsWith('DV') || r.machineId.startsWith('DB') || r.machineId.startsWith('MV')) {
+        isHeading = true;
+      } else if (r.machineId.startsWith('RV')) {
+        isThreading = true;
+      } else {
+        isStamping = true;
+      }
+    }
+
+    const typeLabel = isStamping ? 'máy dập' : (isHeading ? 'máy đấm vít' : 'máy cán ren');
     const machineName = `Máy số ${r.machineId}`.toLowerCase();
     const machineIdStr = `${typeLabel} ${r.machineId}`.toLowerCase();
     const matchesSearch = r.machineId.toLowerCase().includes(query) || machineName.includes(query) || machineIdStr.includes(query) || typeLabel.includes(query);
@@ -121,9 +147,11 @@ async function renderHistoryTable() {
 
     let matchesType = true;
     if (state.historyTypeFilter === 'stamping') {
-      matchesType = !isScrew;
-    } else if (state.historyTypeFilter === 'screw') {
-      matchesType = isScrew;
+      matchesType = isStamping;
+    } else if (state.historyTypeFilter === 'heading') {
+      matchesType = isHeading;
+    } else if (state.historyTypeFilter === 'threading') {
+      matchesType = isThreading;
     }
 
     return matchesSearch && matchesDate && matchesStatus && matchesQuality && matchesType;
@@ -165,10 +193,34 @@ async function renderHistoryTable() {
   pageRecords.forEach(r => {
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
-    const isScrew = r.deviceType ? (r.deviceType !== 'MÁY DẬP') : (parseInt(r.machineId, 10) >= 11);
-    const pressText = r.deviceType || (lang === 'vi'
-      ? (isScrew ? 'MÁY VÍT' : 'MÁY DẬP')
-      : (isScrew ? 'SCREW' : 'PRESS'));
+    const typeVal = r.type || r.deviceType;
+    let pressText = "";
+    if (typeVal) {
+      if (lang === 'vi') {
+        pressText = typeVal.toUpperCase();
+      } else {
+        const typeUpper = typeVal.toUpperCase();
+        if (typeUpper === 'MÁY DẬP' || typeUpper === 'STAMPING') pressText = 'PRESS';
+        else if (typeUpper === 'MÁY ĐẤM VÍT' || typeUpper === 'SCREW_HEADING') pressText = 'SCREW HEADING';
+        else if (typeUpper === 'MÁY REN VÍT' || typeUpper === 'SCREW_THREADING') pressText = 'SCREW THREADING';
+        else pressText = typeUpper;
+      }
+    } else {
+      const machineIdNum = parseInt(r.machineId, 10) || 0;
+      if (machineIdNum >= 1 && machineIdNum <= 10) {
+        pressText = lang === 'vi' ? 'MÁY DẬP' : 'PRESS';
+      } else if (machineIdNum >= 11 && machineIdNum <= 15) {
+        pressText = lang === 'vi' ? 'MÁY ĐẤM VÍT' : 'SCREW HEADING';
+      } else if (machineIdNum >= 16) {
+        pressText = lang === 'vi' ? 'MÁY CÁN REN' : 'SCREW THREADING';
+      } else if (r.machineId.startsWith('DV') || r.machineId.startsWith('DB') || r.machineId.startsWith('MV')) {
+        pressText = lang === 'vi' ? 'MÁY ĐẤM VÍT' : 'SCREW HEADING';
+      } else if (r.machineId.startsWith('RV')) {
+        pressText = lang === 'vi' ? 'MÁY CÁN REN' : 'SCREW THREADING';
+      } else {
+        pressText = lang === 'vi' ? 'MÁY DẬP' : 'PRESS';
+      }
+    }
     tr.innerHTML = `
       <td>
         <span style="font-weight: 700;">${pressText} ${r.machineId}</span>
@@ -273,9 +325,8 @@ async function renderHistoryTable() {
   });
   pagination.appendChild(nextBtn);
 
-  // Tính toán các KPI và render bảng quản lý lệnh sản xuất
+  // Tính toán các KPI
   await calculateHistoryKPIs();
-  await renderOrdersManagementTable();
 }
 
 
@@ -349,7 +400,6 @@ function initHistoryControls() {
     mainTypeFilter.addEventListener('change', (e) => {
       state.historyTypeFilter = e.target.value;
       state.historyCurrentPage = 1;
-      state.ordersCurrentPage = 1;
       renderHistoryTable();
     });
   }
@@ -421,9 +471,7 @@ function initHistoryControls() {
 }
 
 function generateProcessTimeline(r, lang) {
-  const totalStrokes = parseInt(r.strokes.replace(/[\.,]/g, ''), 10);
-  const totalEff = Math.round((totalStrokes / 1500) * 100);
-  const isRunning = r.status === 'running';
+  const isRunning = (r.status === 'running' || r.status === 'completed' || r.status === 'active');
 
   // Parse start and end times
   const startParts = r.start.split(' ');
@@ -455,7 +503,17 @@ function generateProcessTimeline(r, lang) {
   let steps = [];
 
   if (isRunning) {
-    // 3 steps: Run -> Tool change / Material shortage -> Run
+    steps = [
+      {
+        time: `${formatMinsToTime(startMins)} - ${formatMinsToTime(endMins)} (${formatDuration(totalMins)})`,
+        status: lang === 'vi' ? 'HOÀN THÀNH (ĐANG CHẠY)' : 'COMPLETED (RUNNING)',
+        statusClass: 'text-running',
+        dotColor: '#00ff00',
+        desc: lang === 'vi' ? 'Máy hoạt động' : 'Machine active'
+      }
+    ];
+  } else {
+    // 3 steps: Run -> Stopped -> Run
     const run1Mins = Math.floor(totalMins * 0.45);
     const stopMins = 30; // 30 mins stop
     const run2Mins = totalMins - run1Mins - stopMins;
@@ -467,79 +525,27 @@ function generateProcessTimeline(r, lang) {
     const t3_start = t2_end;
     const t3_end = endMins;
 
-    const strokes1 = Math.floor(totalStrokes * 0.5);
-    const strokes2 = 0;
-    const strokes3 = totalStrokes - strokes1;
-
-    const eff1 = Math.floor(totalEff * 0.5);
-    const eff2 = 0;
-    const eff3 = totalEff - eff1;
-
     steps = [
       {
         time: `${formatMinsToTime(t1_start)} - ${formatMinsToTime(t1_end)} (${formatDuration(run1Mins)})`,
         status: lang === 'vi' ? 'HOÀN THÀNH (ĐANG CHẠY)' : 'COMPLETED (RUNNING)',
         statusClass: 'text-running',
         dotColor: '#00ff00',
-        desc: lang === 'vi' ? `Nhịp dập ổn định ca sáng. Sản lượng: ${strokes1.toLocaleString('vi-VN')} lần. Hiệu suất: ${eff1}%.` : `Morning run. Yield: ${strokes1.toLocaleString('en-US')}. Efficiency: ${eff1}%.`
+        desc: lang === 'vi' ? 'Máy hoạt động' : 'Machine active'
       },
       {
         time: `${formatMinsToTime(t2_start)} - ${formatMinsToTime(t2_end)} (${formatDuration(stopMins)})`,
         status: lang === 'vi' ? 'CHƯA HOÀN THÀNH (DỪNG MÁY)' : 'INCOMPLETE (STOPPED)',
         statusClass: 'text-stopped',
         dotColor: '#ff9800',
-        desc: lang === 'vi' ? `Tạm dừng cấp phôi nguyên liệu cuộn. Sản lượng: ${strokes2} lần. Hiệu suất: ${eff2}%.` : `Material replacement downtime. Yield: ${strokes2}. Efficiency: ${eff2}%.`
+        desc: lang === 'vi' ? 'Máy dừng' : 'Machine stopped'
       },
       {
         time: `${formatMinsToTime(t3_start)} - ${formatMinsToTime(t3_end)} (${formatDuration(run2Mins)})`,
         status: lang === 'vi' ? 'HOÀN THÀNH (ĐANG CHẠY)' : 'COMPLETED (RUNNING)',
         statusClass: 'text-running',
         dotColor: '#00ff00',
-        desc: lang === 'vi' ? `Nhịp dập tăng tốc hoàn thành ca. Sản lượng: ${strokes3.toLocaleString('vi-VN')} lần. Hiệu suất: ${eff3}%.` : `Afternoon run. Yield: ${strokes3.toLocaleString('en-US')}. Efficiency: ${eff3}%.`
-      }
-    ];
-  } else {
-    // 3 steps: Run -> Sudden power outage stop -> Run
-    const run1Mins = Math.floor(totalMins * 0.4);
-    const stopMins = 120; // 2 hours outage
-    const run2Mins = totalMins - run1Mins - stopMins;
-
-    const t1_start = startMins;
-    const t1_end = t1_start + run1Mins;
-    const t2_start = t1_end;
-    const t2_end = t2_start + stopMins;
-    const t3_start = t2_end;
-    const t3_end = endMins;
-
-    const strokes1 = Math.floor(totalStrokes * 0.6);
-    const strokes2 = 0;
-    const strokes3 = totalStrokes - strokes1;
-
-    const eff1 = Math.floor(totalEff * 0.6);
-    const eff2 = 0;
-    const eff3 = totalEff - eff1;
-
-    steps = [
-      {
-        time: `${formatMinsToTime(t1_start)} - ${formatMinsToTime(t1_end)} (${formatDuration(run1Mins)})`,
-        status: lang === 'vi' ? 'HOÀN THÀNH (ĐANG CHẠY)' : 'COMPLETED (RUNNING)',
-        statusClass: 'text-running',
-        dotColor: '#00ff00',
-        desc: lang === 'vi' ? `Nhịp dập ổn định ban đầu. Sản lượng: ${strokes1.toLocaleString('vi-VN')} lần. Hiệu suất: ${eff1}%.` : `Initial stamping run. Yield: ${strokes1.toLocaleString('en-US')}. Efficiency: ${eff1}%.`
-      },
-      {
-        time: `${formatMinsToTime(t2_start)} - ${formatMinsToTime(t2_end)} (${formatDuration(stopMins)})`,
-        status: lang === 'vi' ? 'CHƯA HOÀN THÀNH (DỪNG MÁY)' : 'INCOMPLETE (STOPPED)',
-        statusClass: 'text-stopped',
-        dotColor: '#ef4444',
-        desc: lang === 'vi' ? `Tạm dừng vận hành thiết bị. Sản lượng: ${strokes2} lần. Hiệu suất: ${eff2}%.` : `Machine operation stopped. Yield: ${strokes2}. Efficiency: ${eff2}%.`
-      },
-      {
-        time: `${formatMinsToTime(t3_start)} - ${formatMinsToTime(t3_end)} (${formatDuration(run2Mins)})`,
-        status: lang === 'vi' ? 'HOÀN THÀNH (ĐANG CHẠY)' : 'COMPLETED (RUNNING)',
-        statusClass: 'text-running',
-        dotColor: '#00ff00',
-        desc: lang === 'vi' ? `Vận hành trở lại sau thời gian dừng máy. Sản lượng: ${strokes3.toLocaleString('vi-VN')} lần. Hiệu suất: ${eff3}%.` : `Resumed run post-stop. Yield: ${strokes3.toLocaleString('en-US')}. Efficiency: ${eff3}%.`
+        desc: lang === 'vi' ? 'Máy hoạt động' : 'Machine active'
       }
     ];
   }
@@ -574,15 +580,76 @@ function generateProcessTimeline(r, lang) {
 }
 
 async function calculateHistoryKPIs() {
-  const lang = state.language || 'vi';
+  let lang = 'vi';
+  try {
+    lang = (typeof state !== 'undefined' && state.language) ? state.language : 'vi';
+  } catch (e) {}
   
-  let dayRatio = "06:50:00";
-  let weekRatio = "48:20:00";
-  let monthRatio = "192:40:00";
+  // Safe dynamic machinesCount calculation from state
+  let machinesCount = 11;
+  let activeType = 'stamping';
+  try {
+    activeType = (typeof state !== 'undefined' && state.historyTypeFilter) ? state.historyTypeFilter : 'stamping';
+    const machinesList = (typeof machinesData !== 'undefined' && machinesData) ? Object.values(machinesData) : [];
+    if (machinesList.length > 0) {
+      const filtered = machinesList.filter(m => {
+        const isMonitored = m.isMonitored === true || m.isMonitored === 1 || m.IsMonitored === true || m.IsMonitored === 1;
+        if (!isMonitored) return false;
+        const typeStr = (m.deviceType || m.type || "").toUpperCase();
+        if (activeType === 'heading') {
+          return typeStr === 'MÁY ĐẤM VÍT' || typeStr === 'SCREW_HEADING' || typeStr === 'HEADING';
+        } else if (activeType === 'threading') {
+          return typeStr === 'MÁY REN VÍT' || typeStr === 'SCREW_THREADING' || typeStr === 'THREADING';
+        } else {
+          return typeStr === 'MÁY DẬP' || typeStr === 'STAMPING';
+        }
+      });
+      if (filtered.length > 0) {
+        machinesCount = filtered.length;
+      } else {
+        machinesCount = activeType === 'heading' ? 15 : (activeType === 'threading' ? 2 : 11);
+      }
+    } else {
+      machinesCount = activeType === 'heading' ? 15 : (activeType === 'threading' ? 2 : 11);
+    }
+  } catch (e) {
+    machinesCount = activeType === 'heading' ? 15 : (activeType === 'threading' ? 2 : 11);
+  }
 
-  let dayYield = "14.700";
-  let weekYield = "102.900";
-  let monthYield = "441.000";
+  // Helpers to format and divide time/strokes by machines count
+  function divideTimeStr(timeStr, divisor) {
+    if (!timeStr) return "00:00:00";
+    const parts = timeStr.split(':');
+    if (parts.length < 3) return "00:00:00";
+    const h = parseInt(parts[0], 10) || 0;
+    const m = parseInt(parts[1], 10) || 0;
+    const s = parseInt(parts[2], 10) || 0;
+    const totalSeconds = h * 3600 + m * 60 + s;
+    const avgSeconds = Math.round(totalSeconds / divisor);
+    const avgH = Math.floor(avgSeconds / 3600);
+    const avgM = Math.floor((avgSeconds % 3600) / 60);
+    const avgS = avgSeconds % 60;
+    return `${avgH.toString().padStart(2, '0')}:${avgM.toString().padStart(2, '0')}:${avgS.toString().padStart(2, '0')}`;
+  }
+
+  function divideStrokesStr(strokesStr, divisor, locale) {
+    if (!strokesStr) return "0";
+    const val = parseInt(strokesStr.replace(/[\.,]/g, ''), 10) || 0;
+    const avg = Math.round(val / divisor);
+    if (locale === 'vi') {
+      return avg.toLocaleString('vi-VN');
+    } else {
+      return avg.toLocaleString('en-US');
+    }
+  }
+
+  let dayRatio = divideTimeStr("51:41:00", machinesCount);
+  let weekRatio = divideTimeStr("32:05:00", machinesCount);
+  let monthRatio = divideTimeStr("140:50:00", machinesCount);
+
+  let dayYield = divideStrokesStr("18.705", machinesCount, lang);
+  let weekYield = divideStrokesStr("13.410", machinesCount, lang);
+  let monthYield = divideStrokesStr("51.010", machinesCount, lang);
 
   let dayOeeTrendStr = "+2.1%";
   let dayOeeTrendUp = true;
@@ -600,12 +667,17 @@ async function calculateHistoryKPIs() {
   let monthYieldTrendUp = true;
 
   try {
-    const machineFilterParam = state.historyTypeFilter === 'screw' ? 'all_screw' : 'all_stamping';
+    let machineFilterParam = 'all_stamping';
+    if (activeType === 'heading') {
+      machineFilterParam = 'all_heading';
+    } else if (activeType === 'threading') {
+      machineFilterParam = 'all_threading';
+    }
     const dayRes = await fetch(`${window.basePath || ''}Api/GetReportData?range=day&machineId=${machineFilterParam}`);
     const dayJson = await dayRes.json();
     if (dayJson.success) {
-      dayRatio = dayJson.runTimeStr || "06:50:00";
-      dayYield = dayJson.actualStrokesStr;
+      dayRatio = divideTimeStr(dayJson.runTimeStr, machinesCount) || divideTimeStr("51:41:00", machinesCount);
+      dayYield = divideStrokesStr(dayJson.actualStrokesStr, machinesCount, lang);
       dayOeeTrendStr = dayJson.oeeChangeStr || "+2.1%";
       dayOeeTrendUp = dayJson.oeeTrendUp !== false;
       dayYieldTrendStr = dayJson.yieldChangeStr || "+1.8%";
@@ -615,8 +687,8 @@ async function calculateHistoryKPIs() {
     const weekRes = await fetch(`${window.basePath || ''}Api/GetReportData?range=week&machineId=${machineFilterParam}`);
     const weekJson = await weekRes.json();
     if (weekJson.success) {
-      weekRatio = weekJson.runTimeStr || "48:20:00";
-      weekYield = weekJson.actualStrokesStr;
+      weekRatio = divideTimeStr(weekJson.runTimeStr, machinesCount) || divideTimeStr("32:05:00", machinesCount);
+      weekYield = divideStrokesStr(weekJson.actualStrokesStr, machinesCount, lang);
       weekOeeTrendStr = weekJson.oeeChangeStr || "+1.5%";
       weekOeeTrendUp = weekJson.oeeTrendUp !== false;
       weekYieldTrendStr = weekJson.yieldChangeStr || "+2.3%";
@@ -626,8 +698,8 @@ async function calculateHistoryKPIs() {
     const monthRes = await fetch(`${window.basePath || ''}Api/GetReportData?range=month&machineId=${machineFilterParam}`);
     const monthJson = await monthRes.json();
     if (monthJson.success) {
-      monthRatio = monthJson.runTimeStr || "192:40:00";
-      monthYield = monthJson.actualStrokesStr;
+      monthRatio = divideTimeStr(monthJson.runTimeStr, machinesCount) || divideTimeStr("140:50:00", machinesCount);
+      monthYield = divideStrokesStr(monthJson.actualStrokesStr, machinesCount, lang);
       monthOeeTrendStr = monthJson.oeeChangeStr || "+0.8%";
       monthOeeTrendUp = monthJson.oeeTrendUp !== false;
       monthYieldTrendStr = monthJson.yieldChangeStr || "+1.2%";
@@ -678,128 +750,4 @@ async function calculateHistoryKPIs() {
   updateTrendElement('history-kpi-month-yield-trend', monthYieldTrendStr, monthYieldTrendUp, subMonth);
 }
 
-async function fetchProductionOrdersFromServer() {
-  try {
-    const res = await fetch(`${window.basePath || ''}Api/GetProductionOrders`);
-    const json = await res.json();
-    if (json.success && json.data) {
-      state.productionOrders = json.data;
-    }
-  } catch (err) {
-    console.warn("Failed to fetch production orders from server:", err);
-  }
-}
-
-async function renderOrdersManagementTable() {
-  const container = document.getElementById('orders-table-body');
-  const tableInfo = document.getElementById('orders-table-info');
-  const pagination = document.getElementById('orders-pagination');
-  if (!container || !tableInfo || !pagination) return;
-
-  container.innerHTML = '';
-  
-  await fetchProductionOrdersFromServer();
-  
-  const allOrders = state.productionOrders || [];
-  const activeType = state.historyTypeFilter || 'stamping';
-  const orders = allOrders.filter(o => {
-    const isScrewOrder = o.stage === 'Đấm đầu vít' || o.stage === 'Cán ren vít' || o.machineId.startsWith('RV') || o.machineId.startsWith('DV') || o.machineId.startsWith('ĐB');
-    return activeType === 'screw' ? isScrewOrder : !isScrewOrder;
-  });
-  const totalRecords = orders.length;
-  const totalPages = Math.ceil(totalRecords / state.ordersRowsPerPage) || 1;
-
-  if (state.ordersCurrentPage > totalPages) {
-    state.ordersCurrentPage = totalPages;
-  }
-  if (state.ordersCurrentPage < 1) {
-    state.ordersCurrentPage = 1;
-  }
-
-  const startIndex = (state.ordersCurrentPage - 1) * state.ordersRowsPerPage;
-  const endIndex = Math.min(startIndex + state.ordersRowsPerPage, totalRecords);
-  const paginatedOrders = orders.slice(startIndex, endIndex);
-
-  const lang = state.language || 'vi';
-  const showText = lang === 'vi' ? 'Hiển thị' : 'Showing';
-  const ofText = lang === 'vi' ? 'của' : 'of';
-  const recordsText = lang === 'vi' ? 'bản ghi' : 'records';
-
-  if (totalRecords === 0) {
-    tableInfo.textContent = lang === 'vi' ? 'Hiển thị 0 - 0 của 0 bản ghi' : 'Showing 0 - 0 of 0 records';
-    container.innerHTML = `
-      <tr>
-        <td colspan="8" style="text-align: center; padding: 20px; color: var(--text-secondary);">
-          Chưa có lệnh sản xuất nào được đăng ký.
-        </td>
-      </tr>
-    `;
-    pagination.innerHTML = '';
-    return;
-  }
-
-  tableInfo.textContent = `${showText} ${startIndex + 1} - ${endIndex} ${ofText} ${totalRecords} ${recordsText}`;
-
-  paginatedOrders.forEach(o => {
-    const tr = document.createElement('tr');
-    
-    let badgeClass = 'badge-danger';
-    let statusText = 'Đã dừng';
-    if (o.status === 'completed') {
-      badgeClass = 'badge-success';
-      statusText = 'Đã hoàn thành';
-    } else if (o.status === 'running' || o.status === 'active') {
-      badgeClass = 'badge-info';
-      statusText = 'Đang sản xuất';
-    }
-
-    tr.innerHTML = `
-      <td>${o.createdDate || '09/07/2026'}</td>
-      <td style="font-weight: 700; color: var(--accent-cyan);">${o.orderNo}</td>
-      <td>${o.productCode}</td>
-      <td>${o.productName}</td>
-      <td style="font-weight: 600;">MÁY ${o.machineId}</td>
-      <td>${o.stage || 'Dập định hình'}</td>
-      <td style="text-align: center; font-weight: 700;">${o.plannedQty.toLocaleString('vi-VN')}</td>
-      <td style="text-align: center;"><span class="${badgeClass}">${statusText}</span></td>
-    `;
-    container.appendChild(tr);
-  });
-
-  // Render pagination controls
-  pagination.innerHTML = '';
-  
-  const prevBtn = document.createElement('button');
-  prevBtn.className = `page-link ${state.ordersCurrentPage === 1 ? 'disabled' : ''}`;
-  prevBtn.innerHTML = `&lt;`;
-  prevBtn.addEventListener('click', () => {
-    if (state.ordersCurrentPage > 1) {
-      state.ordersCurrentPage--;
-      renderOrdersManagementTable();
-    }
-  });
-  pagination.appendChild(prevBtn);
-
-  for (let i = 1; i <= totalPages; i++) {
-    const pageBtn = document.createElement('button');
-    pageBtn.className = `page-link ${state.ordersCurrentPage === i ? 'active' : ''}`;
-    pageBtn.textContent = i;
-    pageBtn.addEventListener('click', () => {
-      state.ordersCurrentPage = i;
-      renderOrdersManagementTable();
-    });
-    pagination.appendChild(pageBtn);
-  }
-
-  const nextBtn = document.createElement('button');
-  nextBtn.className = `page-link ${state.ordersCurrentPage === totalPages ? 'disabled' : ''}`;
-  nextBtn.innerHTML = `&gt;`;
-  nextBtn.addEventListener('click', () => {
-    if (state.ordersCurrentPage < totalPages) {
-      state.ordersCurrentPage++;
-      renderOrdersManagementTable();
-    }
-  });
-  pagination.appendChild(nextBtn);
-}
 

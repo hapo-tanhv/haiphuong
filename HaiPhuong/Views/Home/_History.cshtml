@@ -107,7 +107,8 @@
               <div class="main-filter-wrapper-custom" style="display: flex; align-items: center;">
                 <select id="history-main-type-filter" class="date-picker-input-custom" style="padding: 0 12px; height: 38px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); font-weight: 500; cursor: pointer; outline: none; transition: border-color 0.2s;">
                   <option value="stamping" selected data-i18n="history_main_filter_stamping">Máy dập</option>
-                  <option value="screw" data-i18n="history_main_filter_screw">Máy vít</option>
+                  <option value="heading" data-i18n="history_main_filter_heading">Máy đấm vít</option>
+                  <option value="threading" data-i18n="history_main_filter_threading">Máy cán ren</option>
                 </select>
               </div>
 
@@ -199,33 +200,7 @@
               </div>
             </div>
 
-            <!-- Bảng Lệnh sản xuất đã lưu -->
-            <div class="table-container" style="margin-top: 30px;">
-              <div class="panel-header" style="margin-bottom: 15px;">
-                <h3 class="panel-title" style="font-size: 1rem; font-weight: 700; color: var(--accent-blue);" data-i18n="history_orders_title">QUẢN LÝ LỆNH SẢN XUẤT</h3>
-              </div>
-              <table class="history-table" id="orders-management-table">
-                <thead>
-                  <tr>
-                    <th>NGÀY TẠO</th>
-                    <th>SỐ LỆNH SX</th>
-                    <th>MÃ SẢN PHẨM</th>
-                    <th>TÊN SẢN PHẨM</th>
-                    <th>MÃ MÁY</th>
-                    <th>CÔNG ĐOẠN</th>
-                    <th style="text-align: center;">SỐ LƯỢNG (PCS)</th>
-                    <th style="text-align: center;">TRẠNG THÁI</th>
-                  </tr>
-                </thead>
-                <tbody id="orders-table-body">
-                  <!-- Render động qua JS -->
-                </tbody>
-              </table>
-              <div class="table-footer">
-                <span class="table-info" id="orders-table-info"></span>
-                <div class="pagination" id="orders-pagination"></div>
-              </div>
-            </div>
+
 
           </div>
         </section>

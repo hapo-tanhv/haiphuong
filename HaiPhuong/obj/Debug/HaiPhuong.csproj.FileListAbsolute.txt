@@ -54,4 +54,3 @@ C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\HaiPhuong.csproj.Co
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\HaiPhuong.csproj.CopyComplete
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\TestIndema.dll
 C:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\TestIndema.pdb
-c:\Users\case 046\source\repos\HaiPhuong\HaiPhuong\obj\Debug\HaiPhuong.csproj.AssemblyReference.cache

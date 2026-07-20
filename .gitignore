@@ -11,3 +11,6 @@ plans/
 !plans/templates/
 .cafekit-backup/
 .cafekit.lock
+
+# ASP.NET Temp Compilation
+HaiPhuong/temp_compilation/

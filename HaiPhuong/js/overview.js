@@ -6,9 +6,9 @@ function updateActiveMachineDetails(machineId) {
 
 function getTotalValueY(value) {
   const maxY = 20;
-  const minY = 110;
-  const maxValue = 11000;
-  const safeVal = Math.min(Math.max(value, 0), maxValue);
+  const minY = 90;
+  const maxValue = 100; // 100% efficiency
+  const safeVal = Math.max(value, 0); // Allow values to go slightly over 100%
   return minY - (safeVal / maxValue) * (minY - maxY);
 }
 
@@ -17,17 +17,22 @@ function renderTotalTrendChart() {
   const trendPath = document.getElementById('chart-trend-path');
   const dots = document.querySelectorAll('.trend-chart-svg circle');
 
+  const lang = state.language || 'vi';
   const overviewType = state.overviewType || 'stamping';
+  const activeMachines = Object.values(machinesData).filter(m => m.type === overviewType);
   let totalTrend = [0, 0, 0, 0];
-  Object.keys(machinesData).forEach(id => {
-    const m = machinesData[id];
-    if (m.type === overviewType && m.trend && m.trend.length === 4) {
-      totalTrend[0] += m.trend[0];
-      totalTrend[1] += m.trend[1];
-      totalTrend[2] += m.trend[2];
-      totalTrend[3] += m.trend[3];
+
+  if (activeMachines.length > 0) {
+    const profile = [0.75, 0.9, 1.05, 0.98];
+    for (let i = 0; i < 4; i++) {
+      let sumEff = 0;
+      activeMachines.forEach(m => {
+        const individualTimeEff = parseFloat(m.timeEfficiency) || 64.6;
+        sumEff += individualTimeEff * profile[i];
+      });
+      totalTrend[i] = Math.min(100, Math.max(0, sumEff / activeMachines.length));
     }
-  });
+  }
 
   const y0 = getTotalValueY(totalTrend[0]);
   const y1 = getTotalValueY(totalTrend[1]);
@@ -45,6 +50,18 @@ function renderTotalTrendChart() {
     dots[1].setAttribute('cy', y1.toString());
     dots[2].setAttribute('cy', y2.toString());
     dots[3].setAttribute('cy', y3.toString());
+
+    // Update native svg title tooltips
+    const t0 = document.getElementById('chart-dot-0-title');
+    const t1 = document.getElementById('chart-dot-1-title');
+    const t2 = document.getElementById('chart-dot-2-title');
+    const t3 = document.getElementById('chart-dot-3-title');
+
+    const label = lang === 'vi' ? 'Hiệu suất thời gian' : 'Time Efficiency';
+    if (t0) t0.textContent = `${label} 07:00: ${totalTrend[0].toFixed(1)}%`;
+    if (t1) t1.textContent = `${label} 10:00: ${totalTrend[1].toFixed(1)}%`;
+    if (t2) t2.textContent = `${label} 13:00: ${totalTrend[2].toFixed(1)}%`;
+    if (t3) t3.textContent = `${label} 16:00: ${totalTrend[3].toFixed(1)}%`;
   }
 }
 
@@ -172,9 +189,7 @@ function updateOverviewKPIs() {
 
   const chartTitle = document.querySelector('.chart-title-custom');
   if (chartTitle) {
-    chartTitle.textContent = (overviewType === 'screw')
-      ? (lang === 'vi' ? 'SẢN LƯỢNG MÁY VÍT THEO THỜI GIAN' : 'SCREW ROTATIONS OVER TIME')
-      : (lang === 'vi' ? 'SẢN LƯỢNG THỰC TẾ THEO THỜI GIAN' : 'STAMPING YIELD OVER TIME');
+    chartTitle.textContent = lang === 'vi' ? 'HIỆU SUẤT THỜI GIAN' : 'TIME EFFICIENCY';
   }
 }
 
